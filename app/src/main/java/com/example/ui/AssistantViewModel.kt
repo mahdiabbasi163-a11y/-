@@ -452,6 +452,19 @@ class AssistantViewModel(
         }
         setupNetworkCallback()
         viewModelScope.launch {
+            networkMonitor.isOnline.collect { online ->
+                if (online) {
+                    Log.d("AssistantViewModel", "Network state flow detected online. Fetching fresh Kodyar server data...")
+                    loadKodyarDatabase()
+                    fetchSubscriptionPlans()
+                    val token = getSessionToken()
+                    if (token != null) {
+                        loadCurrentUser(token)
+                    }
+                }
+            }
+        }
+        viewModelScope.launch {
             savedErrors.collect {
                 if (_showOnlySaved.value) {
                     updateSearchFilters(_searchQuery.value, _selectedBrand.value, _selectedCategory.value)
@@ -1090,7 +1103,17 @@ class AssistantViewModel(
                     }
                 }
                 val finalDocImages = if (uploadedUrls.isNotEmpty()) uploadedUrls else documentImages
-                val response = repository.register(cleanPhone, cleanPass, name, role, city, categories, documents, finalDocImages)
+                val response = repository.register(
+                    phone = cleanPhone,
+                    pass = cleanPass,
+                    name = name,
+                    role = role,
+                    city = city,
+                    district = district,
+                    categories = categories,
+                    documents = documents,
+                    documentImages = finalDocImages
+                )
                 if ((response.status == "ok" || response.status == "success") && response.user != null) {
                     val sub = extractSubscription(response.user, response.subscription)
                     val userWithSub = response.user.copy(subscription = sub)
@@ -2262,11 +2285,13 @@ class AssistantViewModel(
             val callback = object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
                     super.onAvailable(network)
-                    Log.d("AssistantViewModel", "Internet connected dynamically! Refreshing database...")
-                    if (!hasLoadedFromNetwork) {
-                        viewModelScope.launch {
-                            loadKodyarDatabase()
-                            fetchSubscriptionPlans()
+                    Log.d("AssistantViewModel", "Internet connected dynamically! Refreshing database immediately...")
+                    viewModelScope.launch {
+                        loadKodyarDatabase()
+                        fetchSubscriptionPlans()
+                        val token = getSessionToken()
+                        if (token != null) {
+                            loadCurrentUser(token)
                         }
                     }
                 }

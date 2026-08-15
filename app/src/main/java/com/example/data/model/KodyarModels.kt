@@ -548,7 +548,45 @@ data class OrderStatusUpdateRequest(
 @JsonClass(generateAdapter = true)
 data class UpdateProfileRequest(
     @Json(name = "full_name") val fullName: String? = null,
-    val city: String? = null
+    val name: String? = fullName,
+    val city: String? = null,
+    val district: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class KodyarChatRequest(
+    val message: String,
+    @Json(name = "device_type") val device_type: String? = null,
+    val brand: String? = null,
+    val history: List<Map<String, String>>? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class KodyarChatResponse(
+    val reply: String? = null,
+    val status: String? = null,
+    val suggestions: List<String>? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class BazaarPaymentVerificationRequest(
+    val userId: String? = null,
+    val phone: String? = null,
+    val productId: String? = null,
+    val purchaseToken: String? = null,
+    val orderId: String? = null,
+    val amount: Long? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class PartOrderPayload(
+    val partId: String? = null,
+    @Json(name = "part_id") val part_id: String? = partId,
+    val quantity: Int = 1,
+    val totalPrice: Double? = null,
+    @Json(name = "total_price") val total_price: Double? = totalPrice,
+    val address: String? = null,
+    val phone: String? = null
 )
 
 @JsonClass(generateAdapter = true)

@@ -374,21 +374,33 @@ class AssistantRepository(
         name: String,
         role: String? = null,
         city: String? = null,
+        district: String? = null,
         categories: List<String>? = null,
         documents: List<String>? = null,
         documentImages: List<String>? = null
     ) = withContext(Dispatchers.IO) {
         try {
+            val effectiveAddress = if (!city.isNullOrBlank() && !district.isNullOrBlank() && !city.contains(district)) {
+                "$city - $district"
+            } else {
+                city
+            }
             kodyarApiService.register(
                 com.example.data.api.RegisterRequest(
                     phone = phone,
                     password = pass,
                     full_name = name,
                     name = name,
-                    role = role,
+                    fullName = name,
+                    role = if (role == "technician") "technician" else "client",
                     city = city,
+                    address = effectiveAddress,
+                    full_address = effectiveAddress,
+                    district = district,
+                    region = district,
                     categories = categories,
                     specialty = categories,
+                    specialties = categories,
                     documents = documents,
                     document_images = documentImages
                 )
@@ -754,27 +766,50 @@ class AssistantRepository(
                 )
             }
 
-            // 3. Prepare system instruction
+            // 3. Try Kodyar24 Server AI Chat endpoint first (/api/chat)
+            try {
+                val chatReq = com.example.data.model.KodyarChatRequest(
+                    message = userText,
+                    device_type = "لوازم خانگی",
+                    brand = "عمومی",
+                    history = history.map { mapOf("role" to it.role, "content" to it.text) }
+                )
+                val chatRes = kodyarApiService.sendAiChat(request = chatReq)
+                val replyText = chatRes.reply
+                if (!replyText.isNullOrBlank()) {
+                    val modelMessage = MessageEntity(
+                        conversationId = conversationId,
+                        role = "model",
+                        text = replyText
+                    )
+                    assistantDao.insertMessage(modelMessage)
+                    return@withContext Result.success(replyText)
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("AssistantRepository", "Kodyar chat API attempt: ${e.message}, falling back to Gemini API")
+            }
+
+            // 4. Prepare system instruction & fallback to Gemini API
             val systemInstruction = if (systemInstructionText.isNotEmpty()) {
                 ContentDto(parts = listOf(PartDto(text = systemInstructionText)))
             } else {
                 null
             }
 
-            // 4. Check if API key is configured
+            // 5. Check if API key is configured
             val apiKey = BuildConfig.GEMINI_API_KEY
             if (apiKey.isEmpty() || apiKey == "MY_GEMINI_API_KEY") {
-                return@withContext Result.failure(Exception("Gemini API key is not configured. Please set your GEMINI_API_KEY in the Secrets panel in AI Studio."))
+                return@withContext Result.failure(Exception("پاسخی از سرور دریافت نشد. لطفاً اتصال اینترنت خود را بررسی کنید."))
             }
 
-            // 5. Send API request
+            // 6. Send API request to Gemini
             val request = GenerateContentRequest(
                 contents = contents,
                 systemInstruction = systemInstruction
             )
             val response = apiService.generateContent(apiKey, request)
 
-            // 6. Parse response & insert model reply
+            // 7. Parse response & insert model reply
             val replyText = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
             if (replyText != null) {
                 val modelMessage = MessageEntity(
@@ -785,7 +820,7 @@ class AssistantRepository(
                 assistantDao.insertMessage(modelMessage)
                 Result.success(replyText)
             } else {
-                Result.failure(Exception("Received empty or invalid response from Gemini API."))
+                Result.failure(Exception("پاسخی از هوش مصنوعی دریافت نشد."))
             }
         } catch (e: Exception) {
             Result.failure(e)

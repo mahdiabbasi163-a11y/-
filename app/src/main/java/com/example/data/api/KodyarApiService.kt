@@ -68,6 +68,11 @@ interface KodyarApiService {
         @Header("Authorization") token: String? = null
     ): KodyarResponse
 
+    @GET("user/profile")
+    suspend fun getUserProfile(
+        @Header("Authorization") token: String? = null
+    ): KodyarResponse
+
     @POST("auth/update-profile")
     suspend fun updateProfile(
         @Header("Authorization") token: String? = null,
@@ -85,7 +90,10 @@ interface KodyarApiService {
     @GET("error-codes/search")
     suspend fun searchErrorCodesApi(
         @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 1000
+        @Query("limit") limit: Int = 1000,
+        @Query("search") search: String? = null,
+        @Query("brand") brand: String? = null,
+        @Query("device_type") deviceType: String? = null
     ): KodyarDatabaseResponse
 
     @GET("error-codes/{id}")
@@ -197,6 +205,46 @@ interface KodyarApiService {
     suspend fun getMySubscriptionStatus(
         @Header("Authorization") token: String? = null
     ): KodyarResponse
+
+    @GET("subscriptions/my")
+    suspend fun getMySubscriptionStatusAlt(
+        @Header("Authorization") token: String? = null
+    ): KodyarResponse
+
+    @POST("payment/bazaar")
+    suspend fun verifyBazaarPayment(
+        @Header("Authorization") token: String? = null,
+        @Body request: BazaarPaymentVerificationRequest
+    ): KodyarResponse
+
+    @GET("part-orders/my")
+    suspend fun getMyPartOrdersAlt(
+        @Header("Authorization") token: String? = null
+    ): KodyarResponse
+
+    @GET("orders/my")
+    suspend fun getMyOrdersAlt(
+        @Header("Authorization") token: String? = null
+    ): KodyarResponse
+
+    @POST("part-orders")
+    suspend fun submitPartOrder(
+        @Header("Authorization") token: String? = null,
+        @Body request: PartOrderPayload
+    ): KodyarResponse
+
+    @POST("store/order")
+    suspend fun submitStoreOrder(
+        @Header("Authorization") token: String? = null,
+        @Body request: PartOrderPayload
+    ): KodyarResponse
+
+    // 🔟 چت هوش مصنوعی عیب‌یابی (AI Assistant)
+    @POST("chat")
+    suspend fun sendAiChat(
+        @Header("Authorization") token: String? = null,
+        @Body request: KodyarChatRequest
+    ): KodyarChatResponse
 
     // 🔄 پایگاه داده و تعمیرات
     @GET("get-database")
@@ -438,15 +486,21 @@ data class RegisterRequest(
     val password: String,
     val full_name: String,
     val name: String? = full_name,
+    @Json(name = "fullName") val fullName: String? = full_name,
     val role: String? = null,
     val city: String? = null,
     @Json(name = "cityName") val cityName: String? = city,
     @Json(name = "city_name") val city_name: String? = city,
+    @Json(name = "address") val address: String? = city,
+    @Json(name = "full_address") val full_address: String? = city,
+    @Json(name = "district") val district: String? = null,
+    @Json(name = "region") val region: String? = district,
     @Json(name = "location") val location: String? = city,
     @Json(name = "activeLocation") val activeLocation: String? = city,
     @Json(name = "province") val province: String? = city,
     val categories: List<String>? = null,
     @Json(name = "specialty") val specialty: List<String>? = null,
+    @Json(name = "specialties") val specialties: List<String>? = specialty,
     val documents: List<String>? = null,
     val document_images: List<String>? = null
 )
