@@ -430,6 +430,7 @@ class AssistantViewModel(
     val freeProblemCount: StateFlow<Int> = _freeProblemCount.asStateFlow()
 
     init {
+        loadPersistedCart()
         observeRoomDatabase()
         viewModelScope.launch(Dispatchers.IO) {
             if (!sharedPrefs.getBoolean("v3_test_kodyar_cache_purged", false)) {
@@ -1638,6 +1639,51 @@ class AssistantViewModel(
     }
 
     // --- Cart functions ---
+    private fun persistCart() {
+        try {
+            val cartList = _cart.value
+            val qtyMap = _cartQty.value
+            val cartJson = moshi.adapter<List<String>>(
+                com.squareup.moshi.Types.newParameterizedType(List::class.java, String::class.java)
+            ).toJson(cartList)
+            val qtyJson = moshi.adapter<Map<String, Int>>(
+                com.squareup.moshi.Types.newParameterizedType(Map::class.java, String::class.java, Int::class.javaObjectType)
+            ).toJson(qtyMap)
+
+            sharedPrefs.edit()
+                .putString("persisted_cart_items", cartJson)
+                .putString("persisted_cart_quantities", qtyJson)
+                .apply()
+        } catch (e: Exception) {
+            Log.e("AssistantViewModel", "Error persisting cart", e)
+        }
+    }
+
+    private fun loadPersistedCart() {
+        try {
+            val cartJson = sharedPrefs.getString("persisted_cart_items", null)
+            val qtyJson = sharedPrefs.getString("persisted_cart_quantities", null)
+            if (!cartJson.isNullOrEmpty()) {
+                val list = moshi.adapter<List<String>>(
+                    com.squareup.moshi.Types.newParameterizedType(List::class.java, String::class.java)
+                ).fromJson(cartJson)
+                if (list != null) {
+                    _cart.value = list
+                }
+            }
+            if (!qtyJson.isNullOrEmpty()) {
+                val map = moshi.adapter<Map<String, Int>>(
+                    com.squareup.moshi.Types.newParameterizedType(Map::class.java, String::class.java, Int::class.javaObjectType)
+                ).fromJson(qtyJson)
+                if (map != null) {
+                    _cartQty.value = map
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("AssistantViewModel", "Error loading persisted cart", e)
+        }
+    }
+
     fun addToCart(partId: String) {
         val currentCart = _cart.value.toMutableList()
         if (!currentCart.contains(partId)) {
@@ -1647,6 +1693,7 @@ class AssistantViewModel(
         val currentQty = _cartQty.value.toMutableMap()
         currentQty[partId] = currentQty[partId] ?: 1
         _cartQty.value = currentQty
+        persistCart()
     }
 
     fun addToCartWithQty(partId: String, qty: Int) {
@@ -1663,6 +1710,7 @@ class AssistantViewModel(
         val existing = currentQty[partId] ?: 0
         currentQty[partId] = minOf(maxStock, (existing + qty).coerceAtLeast(1))
         _cartQty.value = currentQty
+        persistCart()
     }
 
     fun removeFromCart(partId: String) {
@@ -1673,6 +1721,7 @@ class AssistantViewModel(
         val currentQty = _cartQty.value.toMutableMap()
         currentQty.remove(partId)
         _cartQty.value = currentQty
+        persistCart()
     }
 
     fun updateCartQty(partId: String, qty: Int) {
@@ -1682,6 +1731,7 @@ class AssistantViewModel(
         if (qty > 0) {
             currentQty[partId] = minOf(maxStock, qty)
             _cartQty.value = currentQty
+            persistCart()
         }
     }
 
@@ -1689,6 +1739,7 @@ class AssistantViewModel(
         _cart.value = emptyList()
         _cartQty.value = emptyMap()
         _purchaseSuccess.value = false
+        persistCart()
     }
 
     /**

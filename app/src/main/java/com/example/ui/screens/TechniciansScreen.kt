@@ -335,7 +335,7 @@ fun TechniciansScreen(
                     (!tech.id.isNullOrBlank() && tech.id == currentUser.id) ||
                     (currentUser.full_name != null && tech.resolvedName == currentUser.full_name)
                 )
-                if (isSelf) {
+                if (isSelf || !tech.resolvedIsVerified) {
                     false
                 } else if (sortBy == "all" || selectedCityFilter == "همه") {
                     true

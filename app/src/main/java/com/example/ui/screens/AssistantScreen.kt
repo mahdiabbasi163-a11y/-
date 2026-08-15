@@ -225,6 +225,7 @@ fun AssistantScreen(
                                                 cartStep = "cart"
                                                 showCartDialog = true
                                             } else {
+                                                Toast.makeText(context, "سبد خرید شما خالی است", Toast.LENGTH_SHORT).show()
                                                 activeTab = "store"
                                             }
                                         },

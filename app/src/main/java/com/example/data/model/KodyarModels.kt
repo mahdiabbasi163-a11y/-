@@ -217,14 +217,50 @@ data class KodyarSparePart(
     val id: String? = null,
     val name: String? = null,
     val brand: String? = null,
+    @Json(name = "compatible_brands") val compatible_brands: Any? = null,
     val category: String? = null,
+    @Json(name = "device_category") val device_category: String? = null,
+    @Json(name = "device_type") val device_type: String? = null,
+    val model: String? = null,
+    @Json(name = "device_model") val device_model: String? = null,
     val price: Double? = null,
     val stock: Int? = null,
     val image: String? = null,
     val imageUrl: String? = null,
     @Json(name = "image_url") val image_url: String? = null,
-    val description: String? = null
-)
+    val description: String? = null,
+    @Json(name = "short_description") val short_description: String? = null,
+    @Json(name = "technical_description") val technical_description: String? = null
+) {
+    val resolvedCategory: String
+        get() = (device_category ?: category ?: device_type ?: "").trim()
+
+    val resolvedBrand: String
+        get() {
+            if (!brand.isNullOrBlank()) return brand.trim()
+            if (compatible_brands is List<*>) {
+                return compatible_brands.filterNotNull().joinToString("، ")
+            } else if (compatible_brands is String && compatible_brands.isNotBlank()) {
+                return compatible_brands.trim()
+            }
+            return ""
+        }
+
+    val resolvedModel: String
+        get() = (model ?: device_model ?: "").trim()
+
+    val resolvedDescription: String
+        get() = (short_description ?: technical_description ?: description ?: "").trim()
+
+    val deviceAndBrandSummary: String
+        get() {
+            val parts = mutableListOf<String>()
+            if (resolvedCategory.isNotBlank()) parts.add(resolvedCategory)
+            if (resolvedBrand.isNotBlank()) parts.add(resolvedBrand)
+            if (resolvedModel.isNotBlank()) parts.add("مدل $resolvedModel")
+            return parts.joinToString(" • ")
+        }
+}
 
 @JsonClass(generateAdapter = true)
 data class KodyarTechnician(

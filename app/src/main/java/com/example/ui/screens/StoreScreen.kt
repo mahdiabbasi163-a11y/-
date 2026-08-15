@@ -199,7 +199,7 @@ fun StoreScreen(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(320.dp),
+                            .height(355.dp),
                         colors = CardDefaults.cardColors(containerColor = CodyarSurface),
                         shape = RoundedCornerShape(14.dp),
                         border = BorderStroke(1.dp, Color(0xFFEAECEF))
@@ -217,7 +217,7 @@ fun StoreScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(155.dp)
+                                        .height(150.dp)
                                         .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
                                         .background(Color(0xFFF1F5F9))
                                         .clickable {
@@ -270,27 +270,46 @@ fun StoreScreen(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 10.dp, vertical = 8.dp),
-                                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
                                 ) {
+                                    // 1. Part Name
                                     Text(
                                         text = part.name ?: "",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = CodyarTextPrimary,
-                                        maxLines = 2,
-                                        minLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                        lineHeight = 17.sp
-                                    )
-                                    Text(
-                                        text = part.brand ?: "برند عمومی",
-                                        fontSize = 10.sp,
-                                        color = CodyarTextSecondary,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
 
+                                    // 2. Device, Brand, and Model (from Database)
+                                    val summary = part.deviceAndBrandSummary
+                                    if (summary.isNotBlank()) {
+                                        Text(
+                                            text = "⚙️ $summary",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = CodyarNavy,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+
+                                    // 3. Short Technical Description (from Database only)
+                                    val desc = part.resolvedDescription
+                                    if (desc.isNotBlank()) {
+                                        Text(
+                                            text = desc,
+                                            fontSize = 9.5.sp,
+                                            color = CodyarTextSecondary,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                            lineHeight = 14.sp
+                                        )
+                                    }
+
+                                    // 4. Stock & Price Row
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -300,14 +319,14 @@ fun StoreScreen(
                                     ) {
                                         Text(
                                             text = if (outOfStock) "ناموجود" else "موجود (${part.stock})",
-                                            fontSize = 10.sp,
+                                            fontSize = 9.5.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = if (outOfStock) Color(0xFFC0392B) else Color(0xFF1E8449)
                                         )
 
                                         Text(
                                             text = "${formatToman(part.price ?: 0.0)} ت",
-                                            fontSize = 13.sp,
+                                            fontSize = 12.5.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color(0xFF1E8449)
                                         )
@@ -320,7 +339,7 @@ fun StoreScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 8.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Button(
@@ -335,11 +354,11 @@ fun StoreScreen(
                                     ),
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(36.dp)
+                                        .height(38.dp)
                                         .testTag("buy_part_direct_button"),
                                     shape = RoundedCornerShape(8.dp),
                                     enabled = !outOfStock,
-                                    contentPadding = PaddingValues(vertical = 0.dp, horizontal = 6.dp)
+                                    contentPadding = PaddingValues(vertical = 0.dp, horizontal = 4.dp)
                                 ) {
                                     Text(
                                         text = if (outOfStock) "ناموجود" else "خرید قطعه 💳",
@@ -349,27 +368,28 @@ fun StoreScreen(
                                     )
                                 }
 
-                                IconButton(
+                                Surface(
                                     onClick = { if (!outOfStock) onAddToCart(part.id ?: "") },
                                     enabled = !outOfStock,
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .background(
-                                            color = if (inCart) Color(0xFFEAFAF1) else Color(0xFFF0F2F5),
-                                            shape = RoundedCornerShape(8.dp)
-                                        )
-                                        .border(
-                                            width = 1.dp,
-                                            color = if (inCart) Color(0xFFA9DFBF) else Color(0xFFE2E8F0),
-                                            shape = RoundedCornerShape(8.dp)
-                                        )
-                                ) {
-                                    Icon(
-                                        imageVector = if (inCart) Icons.Default.Check else Icons.Default.ShoppingCart,
-                                        contentDescription = "افزودن به سبد خرید",
-                                        tint = if (inCart) Color(0xFF1E8449) else CodyarNavy,
-                                        modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(38.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = if (inCart) Color(0xFFEAFAF1) else Color(0xFFF0F2F5),
+                                    border = BorderStroke(
+                                        width = 1.dp,
+                                        color = if (inCart) Color(0xFFA9DFBF) else Color(0xFFE2E8F0)
                                     )
+                                ) {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = if (inCart) Icons.Default.Check else Icons.Default.ShoppingCart,
+                                            contentDescription = "افزودن به سبد خرید",
+                                            tint = if (inCart) Color(0xFF1E8449) else CodyarNavy,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -467,18 +487,27 @@ fun StoreScreen(
                             }
                         }
 
-                        // Title & Brand
+                        // Title & Device Info
                         Text(
                             text = detailPart.name ?: "",
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
                             color = CodyarTextPrimary
                         )
-                        if (!detailPart.brand.isNullOrBlank()) {
+
+                        Text(
+                            text = "⚙️ ${detailPart.deviceAndBrandSummary}",
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 12.sp,
+                            color = CodyarNavy
+                        )
+
+                        if (detailPart.resolvedDescription.isNotBlank()) {
                             Text(
-                                text = "برند: ${detailPart.brand}",
+                                text = detailPart.resolvedDescription,
                                 fontSize = 12.sp,
-                                color = CodyarTextSecondary
+                                color = CodyarTextSecondary,
+                                lineHeight = 18.sp
                             )
                         }
 
