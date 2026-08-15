@@ -32,11 +32,11 @@ fun OrdersScreen(
     var selectedSubTab by remember { mutableStateOf(0) } // 0: Repair Orders, 1: Part Purchases
 
     val statusMap = mapOf(
-        "pending" to Triple("در انتظار بررسی و تایید مدیر", Color(0xFFD68910), Color(0xFFFEF9E7)),
-        "accepted" to Triple("تایید شده - آماده ارسال", Color(0xFF1E8449), Color(0xFFEAFAF1)),
+        "pending" to Triple("در انتظار", Color(0xFFD68910), Color(0xFFFEF9E7)),
+        "accepted" to Triple("تایید شده", Color(0xFF1E8449), Color(0xFFEAFAF1)),
         "ongoing" to Triple("در حال انجام", Color(0xFF2563EB), Color(0xFFEFF6FF)),
-        "completed" to Triple("تحویل داده شده", CodyarTextPrimary, Color(0xFFF0F2F5)),
-        "rejected" to Triple("رد شده توسط مدیر", Color(0xFFC0392B), Color(0xFFFDF0EE))
+        "completed" to Triple("تکمیل شده", CodyarTextPrimary, Color(0xFFF0F2F5)),
+        "rejected" to Triple("لغو شده", Color(0xFFC0392B), Color(0xFFFDF0EE))
     )
 
     LaunchedEffect(Unit) {
@@ -301,28 +301,11 @@ fun OrdersScreen(
                     items(partPurchases.size) { i ->
                         val purchase = partPurchases[i]
 
-                        // 5 Official Statuses:
-                        // 1. در انتظار بررسی و تایید مدیر
-                        // 2. رد شده توسط مدیر
-                        // 3. تایید شده - آماده ارسال
-                        // 4. ارسال شده به پست
-                        // 5. تحویل داده شده
-                        val rawStatus = (purchase.status ?: "").trim().lowercase()
-                        val (statusText, textCol, bgCol) = when {
-                            rawStatus.contains("reject") || rawStatus.contains("cancel") || rawStatus.contains("decline") || rawStatus.contains("رد") || rawStatus.contains("لغو") ->
-                                Triple("رد شده توسط مدیر", Color(0xFFC0392B), Color(0xFFFDF0EE))
-
-                            rawStatus.contains("deliver") || rawStatus.contains("تحویل") ->
-                                Triple("تحویل داده شده", CodyarTextPrimary, Color(0xFFF0F2F5))
-
-                            rawStatus.contains("sent") || rawStatus.contains("ship") || rawStatus.contains("post") || rawStatus.contains("transit") || rawStatus.contains("ارسال") || rawStatus.contains("پست") ->
-                                Triple("ارسال شده به پست", Color(0xFF2563EB), Color(0xFFEFF6FF))
-
-                            rawStatus.contains("accept") || rawStatus.contains("approv") || rawStatus.contains("confirm") || rawStatus.contains("paid") || rawStatus.contains("ready") || rawStatus.contains("process") || rawStatus.contains("تایید") || rawStatus.contains("آماده") ->
-                                Triple("تایید شده - آماده ارسال", Color(0xFF1E8449), Color(0xFFEAFAF1))
-
-                            else ->
-                                Triple("در انتظار بررسی و تایید مدیر", Color(0xFFD68910), Color(0xFFFEF9E7))
+                        // Status styling: pending -> در حال بررسی, sent -> ارسال شده, delivered -> تحویل شده
+                        val (statusText, textCol, bgCol) = when (purchase.status) {
+                            "sent" -> Triple("ارسال شده", Color(0xFF1E8449), Color(0xFFEAFAF1))
+                            "delivered" -> Triple("تحویل داده شده", CodyarTextPrimary, Color(0xFFF0F2F5))
+                            else -> Triple("در حال بررسی", Color(0xFFD68910), Color(0xFFFEF9E7))
                         }
 
                         Card(
@@ -382,9 +365,8 @@ fun OrdersScreen(
                                     color = Color(0xFFEAECEF)
                                 )
 
-                                val formattedDate = convertGregorianToJalali(purchase.shamsiDate ?: purchase.dateStr)
                                 Text(
-                                    text = "📅 تاریخ سفارش: ${formattedDate.ifBlank { purchase.dateStr }}",
+                                    text = "📅 تاریخ سفارش: ${purchase.dateStr}",
                                     fontSize = 12.sp,
                                     color = Color(0xFF718096),
                                     modifier = Modifier.padding(bottom = 4.dp)

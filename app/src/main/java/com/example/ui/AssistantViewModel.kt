@@ -22,8 +22,6 @@ import com.example.data.db.toDomain
 import com.example.data.utils.NetworkMonitor
 import com.example.data.model.*
 import com.example.data.repository.ErrorCodeRepository
-import com.example.ui.screens.convertGregorianToJalali
-import com.example.ui.screens.getCurrentJalaliDate
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.Dispatchers
@@ -393,7 +391,12 @@ class AssistantViewModel(
     }
 
     private fun getCurrentPersianDate(): String {
-        return getCurrentJalaliDate()
+        val calendar = java.util.Calendar.getInstance()
+        val year = calendar.get(java.util.Calendar.YEAR)
+        val month = calendar.get(java.util.Calendar.MONTH) + 1
+        val day = calendar.get(java.util.Calendar.DAY_OF_MONTH)
+        val pYear = year - 621
+        return "$pYear/$month/$day"
     }
 
     private fun calculateExpiryDateForSku(sku: String): String {
@@ -1908,7 +1911,6 @@ class AssistantViewModel(
 
                 // 2. Part Purchases (from response.data if present, mapped to PartPurchaseOrder)
                 val mappedPurchases = rawPurchases.map { order ->
-                    val resolvedShamsi = convertGregorianToJalali(order.shamsi_date ?: order.shamsiDate ?: order.resolvedDate).ifBlank { getCurrentPersianDate() }
                     PartPurchaseOrder(
                         id = order.id ?: "order_${System.currentTimeMillis()}_${order.id.hashCode()}",
                         partId = "",
@@ -1918,35 +1920,17 @@ class AssistantViewModel(
                         totalPrice = 0.0,
                         address = order.city ?: "",
                         notes = "ثبت شده در سایت",
-                        dateStr = resolvedShamsi,
+                        dateStr = order.resolvedDate.ifBlank { getCurrentPersianDate() },
                         status = order.status ?: "pending",
-                        shamsiDate = resolvedShamsi
+                        shamsiDate = order.shamsi_date ?: order.shamsiDate
                     )
                 }
                 
                 // Merge server-fetched purchases with existing local purchases so local orders aren't lost
-                // and local orders receive the updated status from server
                 val currentLocal = _partPurchases.value
-                val updatedLocal = currentLocal.map { local ->
-                    val matchingServer = mappedPurchases.find { serverOrder ->
-                        (serverOrder.id.isNotBlank() && serverOrder.id == local.id) ||
-                        (serverOrder.partName.isNotBlank() && local.partName.isNotBlank() && 
-                            (serverOrder.partName.contains(local.partName) || local.partName.contains(serverOrder.partName)))
-                    }
-                    if (matchingServer != null && !matchingServer.status.isNullOrBlank()) {
-                        local.copy(
-                            status = matchingServer.status,
-                            shamsiDate = matchingServer.shamsiDate ?: local.shamsiDate,
-                            dateStr = matchingServer.dateStr.ifBlank { local.dateStr }
-                        )
-                    } else {
-                        local
-                    }
-                }
-
-                val mergedPurchases = (mappedPurchases + updatedLocal).distinctBy { purchase ->
-                    if (!purchase.id.isNullOrBlank() && !purchase.id.startsWith("order_")) purchase.id
-                    else "${purchase.partName}_${purchase.dateStr}"
+                val mergedPurchases = (mappedPurchases + currentLocal).distinctBy { purchase ->
+                    if (!purchase.id.isNullOrBlank()) purchase.id
+                    else "${purchase.partName}_${purchase.dateStr}_${purchase.totalPrice}"
                 }
 
                 _partPurchases.value = mergedPurchases

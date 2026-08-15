@@ -348,16 +348,15 @@ fun formatToman(price: Double): String {
 
 fun convertGregorianToJalali(dateString: String?): String {
     if (dateString.isNullOrBlank()) return ""
-    val trimmed = dateString.trim()
-    if (trimmed.startsWith("13") || trimmed.startsWith("14") || trimmed.startsWith("۱۴") || trimmed.startsWith("۱۳")) {
-        return trimmed
+    if (dateString.contains("/") && !dateString.startsWith("20")) {
+        return dateString
     }
-    if (!trimmed.any { it.isDigit() }) {
-        return trimmed
+    if (!dateString.any { it.isDigit() }) {
+        return dateString
     }
     try {
-        val cleanDate = trimmed.substringBefore("T").substringBefore(" ").trim()
-        val parts = if (cleanDate.contains("-")) cleanDate.split("-") else cleanDate.split("/")
+        val cleanDate = dateString.substringBefore("T").substringBefore(" ").trim()
+        val parts = cleanDate.split("-")
         if (parts.size == 3) {
             val year = parts[0].toIntOrNull() ?: return dateString
             val month = parts[1].toIntOrNull() ?: return dateString
@@ -409,15 +408,6 @@ fun convertGregorianToJalali(dateString: String?): String {
         // ignore
     }
     return dateString
-}
-
-fun getCurrentJalaliDate(): String {
-    val calendar = java.util.Calendar.getInstance()
-    val year = calendar.get(java.util.Calendar.YEAR)
-    val month = calendar.get(java.util.Calendar.MONTH) + 1
-    val day = calendar.get(java.util.Calendar.DAY_OF_MONTH)
-    val gDate = "$year-${String.format("%02d", month)}-${String.format("%02d", day)}"
-    return convertGregorianToJalali(gDate)
 }
 
 @Composable
