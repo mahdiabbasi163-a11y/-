@@ -606,12 +606,19 @@ data class KodyarChatResponse(
 
 @JsonClass(generateAdapter = true)
 data class BazaarPaymentVerificationRequest(
-    val userId: String? = null,
-    val phone: String? = null,
-    val productId: String? = null,
+    val sku: String? = null,
+    @Json(name = "productId") val productId: String? = sku,
+    @Json(name = "plan") val plan: String? = sku,
     val purchaseToken: String? = null,
-    val orderId: String? = null,
-    val amount: Long? = null
+    @Json(name = "purchase_token") val purchase_token: String? = purchaseToken,
+    val packageName: String? = "com.example",
+    @Json(name = "package_name") val package_name: String? = packageName,
+    val price: Long? = null,
+    @Json(name = "amount") val amount: Long? = price,
+    val userId: String? = null,
+    @Json(name = "user_id") val user_id: String? = userId,
+    val phone: String? = null,
+    val orderId: String? = null
 )
 
 @JsonClass(generateAdapter = true)

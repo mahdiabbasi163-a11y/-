@@ -682,6 +682,39 @@ class AssistantViewModel(
         }
     }
 
+    fun syncBazaarPurchaseToServer(sku: String, purchaseToken: String, orderId: String? = null) {
+        setPremiumUserLocally(sku)
+        val token = getSessionToken()
+        val user = _currentUser.value
+        val appPkg = context.packageName ?: "com.example"
+
+        viewModelScope.launch {
+            try {
+                Log.d("AssistantViewModel", "Sending Bazaar purchase verification to server: sku=$sku")
+                val response = repository.verifyBazaarPayment(
+                    token = token,
+                    sku = sku,
+                    purchaseToken = purchaseToken,
+                    packageName = appPkg,
+                    userId = user?.id,
+                    phone = user?.phone,
+                    orderId = orderId
+                )
+
+                if (response.status == "ok" || response.status == "success" || response.success == true) {
+                    Log.d("AssistantViewModel", "Bazaar purchase verified and recorded in server database successfully.")
+                    if (token != null) {
+                        loadCurrentUser(token)
+                    }
+                } else {
+                    Log.w("AssistantViewModel", "Server returned non-ok for Bazaar purchase verification: ${response.error ?: response.message}")
+                }
+            } catch (e: Exception) {
+                Log.e("AssistantViewModel", "Failed to sync Bazaar purchase to server database", e)
+            }
+        }
+    }
+
     private fun getCachedUser(): KodyarUser? {
         val id = sharedPrefs.getString("cached_user_id", null) ?: return null
         val name = sharedPrefs.getString("cached_user_name", "") ?: ""

@@ -58,6 +58,9 @@ class MainActivity : ComponentActivity() {
 
         try {
             val manager = BazaarBillingManager(applicationContext)
+            manager.onPurchaseResultListener = { sku, purchaseToken, orderId ->
+                viewModel.syncBazaarPurchaseToServer(sku, purchaseToken, orderId)
+            }
             bazaarBillingManager = manager
         } catch (e: Throwable) {
             android.util.Log.e("MainActivity", "Bazaar billing initialization error", e)

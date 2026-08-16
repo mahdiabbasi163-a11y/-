@@ -46,6 +46,8 @@ class BazaarBillingManager(context: Context) {
     private var lastSubscriptions: List<String> = emptyList()
     private var lastPurchases: List<String> = emptyList()
 
+    var onPurchaseResultListener: ((sku: String, purchaseToken: String, orderId: String?) -> Unit)? = null
+
     fun isBazaarInstalled(context: Context): Boolean {
         return try {
             context.packageManager.getPackageInfo("com.farsitel.bazaar", 0)
@@ -142,9 +144,17 @@ class BazaarBillingManager(context: Context) {
                             Log.e(TAG, "شروع خرید محصول ناموفق بود: ${e?.message}", e)
                             safeToast(activity, "خطا در شروع فرآیند خرید از بازار: ${e?.message}")
                         }
-                        purchaseSucceed { _ ->
+                        purchaseSucceed { purchaseEntity ->
                             safeToast(activity, "خرید با موفقیت انجام شد!")
                             queryPurchasedSubscriptions()
+                            try {
+                                val token = purchaseEntity.purchaseToken
+                                val prodId = purchaseEntity.productId
+                                val ordId = purchaseEntity.orderId
+                                onPurchaseResultListener?.invoke(prodId, token, ordId)
+                            } catch (e: Throwable) {
+                                Log.e(TAG, "Error invoking purchase result listener", e)
+                            }
                         }
                         purchaseCanceled { safeToast(activity, "خرید لغو شد.", Toast.LENGTH_SHORT) }
                         purchaseFailed { e ->
@@ -153,9 +163,17 @@ class BazaarBillingManager(context: Context) {
                         }
                     }
                 }
-                purchaseSucceed { _ ->
+                purchaseSucceed { purchaseEntity ->
                     safeToast(activity, "اشتراک با موفقیت فعال شد!")
                     queryPurchasedSubscriptions()
+                    try {
+                        val token = purchaseEntity.purchaseToken
+                        val prodId = purchaseEntity.productId
+                        val ordId = purchaseEntity.orderId
+                        onPurchaseResultListener?.invoke(prodId, token, ordId)
+                    } catch (e: Throwable) {
+                        Log.e(TAG, "Error invoking purchase result listener", e)
+                    }
                 }
                 purchaseCanceled { safeToast(activity, "خرید لغو شد.", Toast.LENGTH_SHORT) }
                 purchaseFailed { throwable ->

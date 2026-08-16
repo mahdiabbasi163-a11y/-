@@ -558,6 +558,37 @@ class AssistantRepository(
         }
     }
 
+    suspend fun verifyBazaarPayment(
+        token: String?,
+        sku: String,
+        purchaseToken: String,
+        packageName: String = "com.example",
+        price: Long? = null,
+        userId: String? = null,
+        phone: String? = null,
+        orderId: String? = null
+    ) = withContext(Dispatchers.IO) {
+        try {
+            val req = com.example.data.model.BazaarPaymentVerificationRequest(
+                sku = sku,
+                purchaseToken = purchaseToken,
+                packageName = packageName,
+                price = price,
+                userId = userId,
+                phone = phone,
+                orderId = orderId
+            )
+            kodyarApiService.verifyBazaarPayment(token, req)
+        } catch (e: Exception) {
+            com.example.data.model.KodyarResponse(
+                status = "error",
+                user = null,
+                error = "خطا در ثبت پرداخت بازار در سرور: ${e.message}",
+                message = parseApiError(e)
+            )
+        }
+    }
+
     suspend fun purchasePart(
         token: String,
         partId: String,
