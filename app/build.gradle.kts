@@ -22,7 +22,7 @@ android {
     targetSdk = 36
     versionCode = 34
     versionName = "2.1.0"
-    buildConfigField("String", "BASE_URL", "\"https://test.kodyar24.ir/api/\"")
+    buildConfigField("String", "BASE_URL", "\"https://kodyar24.ir/api/\"")
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

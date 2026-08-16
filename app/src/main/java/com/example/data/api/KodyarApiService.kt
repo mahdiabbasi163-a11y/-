@@ -591,7 +591,7 @@ object KodyarRetrofitClient {
         val originalUrl = request.url
         val primaryHost = originalUrl.host
 
-        val fallbackHosts = listOf("test.kodyar24.ir").distinct()
+        val fallbackHosts = listOf("kodyar24.ir").distinct()
         val hostsToTry = listOf(primaryHost) + fallbackHosts.filter { it != primaryHost }
 
         var response: okhttp3.Response? = null
