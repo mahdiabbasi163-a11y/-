@@ -179,6 +179,42 @@ fun ProfileScreen(
             }
 
             // --- SECTION: Referral & Invite Code Card ---
+            var showInactiveDiscountDialogInProfile by remember { mutableStateOf(false) }
+
+            if (showInactiveDiscountDialogInProfile) {
+                AlertDialog(
+                    onDismissRequest = { showInactiveDiscountDialogInProfile = false },
+                    icon = {
+                        Text("ℹ️", fontSize = 32.sp)
+                    },
+                    title = {
+                        Text(
+                            text = "سیستم تخفیف و معرف",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = CodyarNavy
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = "متاسفانه فعلاً بخش کد تخفیف و معرف فعال نشده است و خرید اشتراک‌ها مستقیماً با تعرفه مصوب از طریق درگاه بازار انجام می‌پذیرد.",
+                            fontSize = 12.sp,
+                            color = CodyarTextSecondary,
+                            lineHeight = 20.sp
+                        )
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = { showInactiveDiscountDialogInProfile = false },
+                            colors = ButtonDefaults.buttonColors(containerColor = CodyarNavy),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("متوجه شدم", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                )
+            }
+
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -204,119 +240,51 @@ fun ProfileScreen(
                         )
                     }
 
-                    val isTechnician = currentUser.role == "technician"
-                    if (isTechnician) {
-                        val referralCode = "CODYAR-${currentUser.phone.takeLast(6)}"
-                        val clipboardManager = LocalClipboardManager.current
-                        
-                        Text(
-                            text = "شما به عنوان تکنسین می‌توانید کد دعوت خود را با دیگر همکاران و مشتریان به اشتراک بگذارید تا از ۲۵٪ تخفیف ویژه خرید اشتراک بهره‌مند شوند.",
-                            fontSize = 11.sp,
-                            color = CodyarTextSecondary,
-                            lineHeight = 18.sp
-                        )
+                    var codeInput by remember { mutableStateOf("") }
 
-                        Row(
+                    Text(
+                        text = "در صورت داشتن کد معرف یا تخفیف، می‌توانید آن را در کادر زیر وارد کنید.",
+                        fontSize = 11.sp,
+                        color = CodyarTextSecondary,
+                        lineHeight = 18.sp
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = codeInput,
+                            onValueChange = { codeInput = it },
+                            placeholder = { Text("کد معرف یا تخفیف را وارد کنید", fontSize = 11.sp) },
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .background(CodyarBg, RoundedCornerShape(8.dp))
-                                .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(8.dp))
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text("کد دعوت اختصاصی شما:", fontSize = 10.sp, color = Color.Gray)
-                                Text(referralCode, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = CodyarNavy)
-                            }
-                            Button(
-                                onClick = {
-                                    clipboardManager.setText(AnnotatedString(referralCode))
-                                    Toast.makeText(context, "کد دعوت کپی شد: $referralCode", Toast.LENGTH_SHORT).show()
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = CodyarNavy),
-                                shape = RoundedCornerShape(6.dp),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-                            ) {
-                                Text("کپی کردن کد", fontSize = 11.sp)
-                            }
-                        }
-                    } else {
-                        val appliedCode by viewModel.appliedReferralCode.collectAsState()
-                        var codeInput by remember { mutableStateOf("") }
-
-                        Text(
-                            text = "اگر کد معرف از همکاران تکنسین دارید، آن را وارد کنید تا ۲۵٪ تخفیف ویژه خرید تمامی اشتراک‌های کدیار۲۴ برای شما اعمال شود.",
-                            fontSize = 11.sp,
-                            color = CodyarTextSecondary,
-                            lineHeight = 18.sp
+                                .weight(1.5f)
+                                .height(48.dp),
+                            textStyle = androidx.compose.ui.text.TextStyle(fontSize = 12.sp),
+                            singleLine = true,
+                            shape = RoundedCornerShape(8.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = CodyarNavy,
+                                unfocusedBorderColor = Color(0xFFCBD5E1)
+                            )
                         )
-
-                        if (appliedCode != null) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(Color(0xFFE8F5E9), RoundedCornerShape(8.dp))
-                                    .border(1.dp, Color(0xFFA5D6A7), RoundedCornerShape(8.dp))
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    "کد اعمال شده: $appliedCode (تخفیف ۲۵٪ فعال است)",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF1B5E20)
-                                )
-                                TextButton(
-                                    onClick = { viewModel.removeReferralCode() },
-                                    contentPadding = PaddingValues(0.dp)
-                                ) {
-                                    Text("حذف کد", fontSize = 11.sp, color = CodyarRed)
+                        Button(
+                            onClick = {
+                                if (codeInput.isNotBlank()) {
+                                    showInactiveDiscountDialogInProfile = true
+                                } else {
+                                    Toast.makeText(context, "لطفاً کد را وارد کنید", Toast.LENGTH_SHORT).show()
                                 }
-                            }
-                        } else {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                OutlinedTextField(
-                                    value = codeInput,
-                                    onValueChange = { codeInput = it },
-                                    placeholder = { Text("کد معرف را وارد کنید", fontSize = 11.sp) },
-                                    modifier = Modifier
-                                        .weight(1.5f)
-                                        .height(48.dp),
-                                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 12.sp),
-                                    singleLine = true,
-                                    shape = RoundedCornerShape(8.dp),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = CodyarNavy,
-                                        unfocusedBorderColor = Color(0xFFCBD5E1)
-                                    )
-                                )
-                                Button(
-                                    onClick = {
-                                        if (codeInput.isNotBlank()) {
-                                            val success = viewModel.applyReferralCode(codeInput)
-                                            if (success) {
-                                                Toast.makeText(context, "کد معرف با ۲۵٪ تخفیف اعمال شد", Toast.LENGTH_SHORT).show()
-                                            } else {
-                                                Toast.makeText(context, "کد دعوت نامعتبر است (حداقل ۴ کاراکتر)", Toast.LENGTH_SHORT).show()
-                                            }
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .weight(0.8f)
-                                        .height(42.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = CodyarNavy),
-                                    shape = RoundedCornerShape(8.dp),
-                                    contentPadding = PaddingValues(0.dp)
-                                ) {
-                                    Text("ثبت و اعمال", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                }
-                            }
+                            },
+                            modifier = Modifier
+                                .weight(0.8f)
+                                .height(42.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = CodyarNavy),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Text("ثبت و اعمال", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

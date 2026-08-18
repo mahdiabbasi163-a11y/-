@@ -199,7 +199,7 @@ fun StoreScreen(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(355.dp),
+                            .height(310.dp),
                         colors = CardDefaults.cardColors(containerColor = CodyarSurface),
                         shape = RoundedCornerShape(14.dp),
                         border = BorderStroke(1.dp, Color(0xFFEAECEF))
@@ -264,6 +264,25 @@ fun StoreScreen(
                                     } else {
                                         Text("⚙️", fontSize = 48.sp)
                                     }
+
+                                    // Category badge on top-right of the image (matched with website)
+                                    if (part.resolvedCategory.isNotBlank()) {
+                                        Box(
+                                            modifier = Modifier
+                                                .align(Alignment.TopEnd)
+                                                .padding(6.dp)
+                                                .background(Color(0xFF2C3E50).copy(alpha = 0.9f), RoundedCornerShape(6.dp))
+                                                .padding(horizontal = 7.dp, vertical = 3.dp)
+                                        ) {
+                                            Text(
+                                                text = part.resolvedCategory,
+                                                fontSize = 9.5.sp,
+                                                color = Color.White,
+                                                fontWeight = FontWeight.Bold,
+                                                maxLines = 1
+                                            )
+                                        }
+                                    }
                                 }
 
                                 // Info block
@@ -271,7 +290,7 @@ fun StoreScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 10.dp, vertical = 6.dp),
-                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     // 1. Part Name
                                     Text(
@@ -283,11 +302,17 @@ fun StoreScreen(
                                         overflow = TextOverflow.Ellipsis
                                     )
 
-                                    // 2. Device, Brand, and Model (from Database)
-                                    val summary = part.deviceAndBrandSummary
-                                    if (summary.isNotBlank()) {
+                                    // 2. Brand & Model (from Database)
+                                    val brandAndModel = buildString {
+                                        if (part.resolvedBrand.isNotBlank()) append(part.resolvedBrand)
+                                        if (part.resolvedModel.isNotBlank()) {
+                                            if (isNotEmpty()) append(" • ")
+                                            append("مدل ${part.resolvedModel}")
+                                        }
+                                    }
+                                    if (brandAndModel.isNotBlank()) {
                                         Text(
-                                            text = "⚙️ $summary",
+                                            text = brandAndModel,
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Medium,
                                             color = CodyarNavy,
@@ -296,24 +321,11 @@ fun StoreScreen(
                                         )
                                     }
 
-                                    // 3. Short Technical Description (from Database only)
-                                    val desc = part.resolvedDescription
-                                    if (desc.isNotBlank()) {
-                                        Text(
-                                            text = desc,
-                                            fontSize = 9.5.sp,
-                                            color = CodyarTextSecondary,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis,
-                                            lineHeight = 14.sp
-                                        )
-                                    }
-
-                                    // 4. Stock & Price Row
+                                    // 3. Stock & Price Row
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(top = 2.dp),
+                                            .padding(top = 4.dp),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
@@ -326,7 +338,7 @@ fun StoreScreen(
 
                                         Text(
                                             text = "${formatToman(part.price ?: 0.0)} ت",
-                                            fontSize = 12.5.sp,
+                                            fontSize = 12.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color(0xFF1E8449)
                                         )

@@ -111,6 +111,41 @@ fun SubscriptionPlansDialog(
 
                 // Referral/Coupon Code Section
                 var inviteCodeInput by remember { mutableStateOf("") }
+                var showInactiveDiscountDialog by remember { mutableStateOf(false) }
+
+                if (showInactiveDiscountDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showInactiveDiscountDialog = false },
+                        icon = {
+                            Text("ℹ️", fontSize = 32.sp)
+                        },
+                        title = {
+                            Text(
+                                text = "اطلاعیه کد تخفیف",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = CodyarNavy
+                            )
+                        },
+                        text = {
+                            Text(
+                                text = "متاسفانه فعلاً بخش کد تخفیف و معرف در فرآیند خرید فعال نشده است و خرید اشتراک‌ها مستقیماً با تعرفه مصوب از طریق درگاه بازار انجام می‌پذیرد.",
+                                fontSize = 12.sp,
+                                color = CodyarTextSecondary,
+                                lineHeight = 20.sp
+                            )
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = { showInactiveDiscountDialog = false },
+                                colors = ButtonDefaults.buttonColors(containerColor = CodyarNavy),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text("متوجه شدم", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    )
+                }
                 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -125,62 +160,38 @@ fun SubscriptionPlansDialog(
                             fontSize = 12.sp,
                             color = CodyarNavy
                         )
-                        if (appliedReferralCode != null) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    "کد اعمال شده: $appliedReferralCode (تخفیف ${referralDiscountPercent}٪)",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF1E8449)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = inviteCodeInput,
+                                onValueChange = { inviteCodeInput = it },
+                                placeholder = { Text("کد معرف یا تخفیف", fontSize = 11.sp) },
+                                modifier = Modifier.weight(1.5f).height(48.dp),
+                                textStyle = TextStyle(fontSize = 12.sp),
+                                singleLine = true,
+                                shape = RoundedCornerShape(8.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = CodyarNavy,
+                                    unfocusedBorderColor = Color(0xFFCBD5E1)
                                 )
-                                TextButton(
-                                    onClick = { viewModel.removeReferralCode() },
-                                    contentPadding = PaddingValues(0.dp)
-                                ) {
-                                    Text("حذف کد", fontSize = 11.sp, color = CodyarRed)
-                                }
-                            }
-                        } else {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                            )
+                            Button(
+                                onClick = {
+                                    if (inviteCodeInput.isNotBlank()) {
+                                        showInactiveDiscountDialog = true
+                                    } else {
+                                        Toast.makeText(context, "لطفاً کد را وارد کنید", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                modifier = Modifier.weight(0.8f).height(42.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CodyarNavy),
+                                shape = RoundedCornerShape(8.dp),
+                                contentPadding = PaddingValues(0.dp)
                             ) {
-                                OutlinedTextField(
-                                    value = inviteCodeInput,
-                                    onValueChange = { inviteCodeInput = it },
-                                    placeholder = { Text("کد معرف یا تخفیف", fontSize = 11.sp) },
-                                    modifier = Modifier.weight(1.5f).height(48.dp),
-                                    textStyle = TextStyle(fontSize = 12.sp),
-                                    singleLine = true,
-                                    shape = RoundedCornerShape(8.dp),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = CodyarNavy,
-                                        unfocusedBorderColor = Color(0xFFCBD5E1)
-                                    )
-                                )
-                                Button(
-                                    onClick = {
-                                        if (inviteCodeInput.isNotBlank()) {
-                                            val success = viewModel.applyReferralCode(inviteCodeInput)
-                                            if (success) {
-                                                Toast.makeText(context, "کد معرف با ۲۵٪ تخفیف اعمال شد", Toast.LENGTH_SHORT).show()
-                                            } else {
-                                                Toast.makeText(context, "کد معرف معتبر نیست (حداقل ۴ کاراکتر)", Toast.LENGTH_SHORT).show()
-                                            }
-                                        }
-                                    },
-                                    modifier = Modifier.weight(0.8f).height(42.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = CodyarNavy),
-                                    shape = RoundedCornerShape(8.dp),
-                                    contentPadding = PaddingValues(0.dp)
-                                ) {
-                                    Text("اعمال کد", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                }
+                                Text("اعمال کد", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -241,30 +252,14 @@ fun SubscriptionPlansDialog(
                                         }
                                     }
 
-                                    val origPrice = plan["price"] as Double
-                                    val discountedPrice = if (referralDiscountPercent > 0) {
-                                        origPrice * (1.0 - (referralDiscountPercent / 100.0))
-                                    } else {
-                                        origPrice
-                                    }
+                                    val planPrice = plan["price"] as Double
 
                                     Column(horizontalAlignment = Alignment.End) {
-                                        if (referralDiscountPercent > 0) {
-                                            Text(
-                                                text = "${formatToman(origPrice)} ریال",
-                                                fontWeight = FontWeight.Normal,
-                                                fontSize = 11.sp,
-                                                color = Color.Gray,
-                                                style = TextStyle(
-                                                    textDecoration = TextDecoration.LineThrough
-                                                )
-                                            )
-                                        }
                                         Text(
-                                            text = "${formatToman(discountedPrice)} ریال",
+                                            text = "${formatToman(planPrice)} ریال",
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 15.sp,
-                                            color = if (referralDiscountPercent > 0) Color(0xFF1E8449) else CodyarRed
+                                            color = CodyarRed
                                         )
                                     }
                                 }
