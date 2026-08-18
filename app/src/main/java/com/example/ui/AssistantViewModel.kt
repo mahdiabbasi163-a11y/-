@@ -2033,12 +2033,29 @@ class AssistantViewModel(
                     )
                 }
                 
-                // Merge server-fetched purchases with existing local purchases so local orders aren't lost
+                // Merge server-fetched purchases with existing local purchases so local order details are retained while status is refreshed
                 val currentLocal = _partPurchases.value
-                val mergedPurchases = (mappedPurchases + currentLocal).distinctBy { purchase ->
-                    if (!purchase.id.isNullOrBlank()) purchase.id
-                    else "${purchase.partName}_${purchase.dateStr}_${purchase.totalPrice}"
+                val updatedLocal = currentLocal.map { local ->
+                    val matchingServer = mappedPurchases.find { s ->
+                        (s.id.isNotBlank() && s.id == local.id) ||
+                        (s.partName.isNotBlank() && (s.partName == local.partName || s.partName.contains(local.partName)))
+                    }
+                    if (matchingServer != null) {
+                        local.copy(
+                            status = matchingServer.status ?: local.status,
+                            shamsiDate = matchingServer.shamsiDate ?: local.shamsiDate
+                        )
+                    } else {
+                        local
+                    }
                 }
+                val newFromServer = mappedPurchases.filter { s ->
+                    currentLocal.none { local ->
+                        (s.id.isNotBlank() && s.id == local.id) ||
+                        (s.partName.isNotBlank() && (s.partName == local.partName || s.partName.contains(local.partName)))
+                    }
+                }
+                val mergedPurchases = updatedLocal + newFromServer
 
                 _partPurchases.value = mergedPurchases
                 try {
@@ -2384,6 +2401,35 @@ class AssistantViewModel(
             connectivityManager.registerNetworkCallback(networkRequest, callback)
         } catch (e: Exception) {
             Log.e("AssistantViewModel", "Failed to register network callback.", e)
+        }
+    }
+
+    // --- Global Manual App Refresh ---
+    private val _isGlobalRefreshing = MutableStateFlow(false)
+    val isGlobalRefreshing: StateFlow<Boolean> = _isGlobalRefreshing.asStateFlow()
+
+    fun refreshAllAppData(onComplete: ((Boolean) -> Unit)? = null) {
+        viewModelScope.launch {
+            _isGlobalRefreshing.value = true
+            var success = false
+            try {
+                // 1. Refresh user session, VIP/Premium status, and profile info
+                checkSavedSession()
+                // 2. Refresh subscription plans
+                fetchSubscriptionPlans()
+                // 3. Refresh free usage counts
+                loadFreeStatus()
+                // 4. Refresh repair orders and part purchase histories
+                loadRepairs()
+                // 5. Refresh diagnostic data and spare parts
+                loadKodyarDatabase()
+                success = true
+            } catch (e: Exception) {
+                Log.e("AssistantViewModel", "Error in global refresh", e)
+            } finally {
+                _isGlobalRefreshing.value = false
+                onComplete?.invoke(success)
+            }
         }
     }
 

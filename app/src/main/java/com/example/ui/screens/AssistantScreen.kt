@@ -132,6 +132,7 @@ fun AssistantScreen(
 
     val repairOrders by viewModel.repairOrders.collectAsState()
     val isRepairsLoading by viewModel.isRepairsLoading.collectAsState()
+    val isGlobalRefreshing by viewModel.isGlobalRefreshing.collectAsState()
 
     val freeErrorCount by viewModel.freeErrorCount.collectAsState()
     val freeProblemCount by viewModel.freeProblemCount.collectAsState()
@@ -187,14 +188,15 @@ fun AssistantScreen(
                             }
 
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 if (isPremium) {
                                     Box(
                                         modifier = Modifier
-                                            .background(Color(0xFFC9A227), RoundedCornerShape(6.dp))
-                                            .padding(horizontal = 8.dp, vertical = 3.dp),
+                                            .background(Color(0xFFC9A227), RoundedCornerShape(8.dp))
+                                            .height(36.dp)
+                                            .padding(horizontal = 8.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Row(
@@ -205,15 +207,46 @@ fun AssistantScreen(
                                                 imageVector = Icons.Default.Star,
                                                 contentDescription = null,
                                                 tint = Color.White,
-                                                modifier = Modifier.size(10.dp)
+                                                modifier = Modifier.size(12.dp)
                                             )
                                             Text(
                                                 text = "ویژه",
-                                                fontSize = 10.sp,
+                                                fontSize = 11.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = Color.White
                                             )
                                         }
+                                    }
+                                }
+
+                                // Refresh Button
+                                IconButton(
+                                    onClick = {
+                                        if (!isGlobalRefreshing) {
+                                            viewModel.refreshAllAppData { success ->
+                                                if (success) {
+                                                    Toast.makeText(context, "اطلاعات با موفقیت به‌روزرسانی شد", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .background(Color.White.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                                        .size(36.dp)
+                                ) {
+                                    if (isGlobalRefreshing) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            strokeWidth = 2.dp,
+                                            color = Color.White
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.Refresh,
+                                            contentDescription = "به‌روزرسانی اطلاعات",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(17.dp)
+                                        )
                                     }
                                 }
 
