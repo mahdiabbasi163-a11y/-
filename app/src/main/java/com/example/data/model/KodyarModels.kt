@@ -571,7 +571,10 @@ data class PurchasePartRequest(
     val city: String? = null,
     val notes: String? = null,
     @Json(name = "user_phone") val user_phone: String? = null,
-    @Json(name = "payment_method") val payment_method: String? = "online"
+    @Json(name = "payment_method") val payment_method: String? = "online",
+    @Json(name = "payment_type") val payment_type: String? = "part_purchase",
+    @Json(name = "type") val type: String? = "part_purchase",
+    @Json(name = "status") val status: String? = "pending"
 )
 
 @JsonClass(generateAdapter = true)

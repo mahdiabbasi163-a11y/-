@@ -301,11 +301,19 @@ fun OrdersScreen(
                     items(partPurchases.size) { i ->
                         val purchase = partPurchases[i]
 
-                        // Status styling: pending -> در حال بررسی, sent -> ارسال شده, delivered -> تحویل شده
-                        val (statusText, textCol, bgCol) = when (purchase.status) {
-                            "sent" -> Triple("ارسال شده", Color(0xFF1E8449), Color(0xFFEAFAF1))
-                            "delivered" -> Triple("تحویل داده شده", CodyarTextPrimary, Color(0xFFF0F2F5))
-                            else -> Triple("در حال بررسی", Color(0xFFD68910), Color(0xFFFEF9E7))
+                        // Status styling: pending -> در انتظار تایید پرداخت, approved -> تایید شده, sent -> ارسال به پست, delivered -> تحویل شده
+                        val rawStatus = (purchase.status ?: "").lowercase().trim()
+                        val (statusText, textCol, bgCol) = when {
+                            rawStatus in listOf("approved", "accepted", "processing", "تایید شد", "تایید شده", "در حال آماده سازی", "در حال آماده‌سازی") ->
+                                Triple("تایید شده (در حال آماده‌سازی)", Color(0xFF1E8449), Color(0xFFEAFAF1))
+                            rawStatus in listOf("sent", "shipped", "posted", "ارسال شد", "ارسال شده", "ارسال به پست", "تحویل پست") ->
+                                Triple("ارسال شده به پست 📦", Color(0xFF1D4ED8), Color(0xFFEFF6FF))
+                            rawStatus in listOf("delivered", "completed", "تحویل شد", "تحویل داده شده") ->
+                                Triple("تحویل داده شده ✅", Color(0xFF0F766E), Color(0xFFF0FDFA))
+                            rawStatus in listOf("rejected", "cancelled", "رد شد", "لغو شده") ->
+                                Triple("لغو شده ❌", Color(0xFFC0392B), Color(0xFFFDEDEC))
+                            else ->
+                                Triple("در انتظار تایید پرداخت ⏳", Color(0xFFD68910), Color(0xFFFEF9E7))
                         }
 
                         Card(

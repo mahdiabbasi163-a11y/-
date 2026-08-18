@@ -17,6 +17,7 @@ import kotlinx.coroutines.withContext
 import com.example.data.db.OfflineDataDao
 import com.example.data.db.toDomain
 import com.example.data.db.toEntity
+import com.example.data.cache.KodyarCacheManager
 
 class AssistantRepository(
     private val assistantDao: AssistantDao,
@@ -58,7 +59,14 @@ class AssistantRepository(
         offlineDataDao?.clearAllOfflineCache()
     }
 
-    suspend fun getKodyarDatabase(): com.example.data.model.KodyarDatabaseResponse = withContext(Dispatchers.IO) {
+    suspend fun getKodyarDatabase(forceRefresh: Boolean = false): com.example.data.model.KodyarDatabaseResponse = withContext(Dispatchers.IO) {
+        if (!forceRefresh) {
+            val cached = KodyarCacheManager.get<com.example.data.model.KodyarDatabaseResponse>("kodyar_database")
+            if (cached != null) {
+                return@withContext cached
+            }
+        }
+
         var mergedErrorCodes = listOf<com.example.data.model.KodyarErrorCode>()
         var mergedSpareParts = listOf<com.example.data.model.KodyarSparePart>()
         var mergedProblems = listOf<com.example.data.model.KodyarCommonProblem>()
@@ -73,6 +81,7 @@ class AssistantRepository(
             if (res.resolvedTechnicians.isNotEmpty()) mergedTechs = res.resolvedTechnicians
 
             if (mergedErrorCodes.isNotEmpty() && mergedSpareParts.isNotEmpty()) {
+                KodyarCacheManager.put("kodyar_database", res, KodyarCacheManager.TTL_SPARE_PARTS_MS)
                 return@withContext res
             }
         } catch (e: Exception) {
@@ -144,18 +153,32 @@ class AssistantRepository(
             }
         }
 
-        return@withContext com.example.data.model.KodyarDatabaseResponse(
+        val finalDb = com.example.data.model.KodyarDatabaseResponse(
             status = if (mergedErrorCodes.isNotEmpty() || mergedSpareParts.isNotEmpty() || mergedTechs.isNotEmpty() || mergedProblems.isNotEmpty()) "ok" else "empty",
             errorCodes = mergedErrorCodes,
             spareParts = mergedSpareParts,
             commonProblems = mergedProblems,
             technicians = mergedTechs
         )
+        if (finalDb.status == "ok") {
+            KodyarCacheManager.put("kodyar_database", finalDb, KodyarCacheManager.TTL_SPARE_PARTS_MS)
+        }
+        return@withContext finalDb
     }
 
-    suspend fun getSubscriptionPlans() = withContext(Dispatchers.IO) {
+    suspend fun getSubscriptionPlans(forceRefresh: Boolean = false) = withContext(Dispatchers.IO) {
+        if (!forceRefresh) {
+            val cached = KodyarCacheManager.get<com.example.data.model.KodyarPlansResponse>("subscription_plans")
+            if (cached != null) {
+                return@withContext cached
+            }
+        }
         try {
-            kodyarApiService.getSubscriptionPlans()
+            val res = kodyarApiService.getSubscriptionPlans()
+            if (res.status == "ok" || res.status == "success") {
+                KodyarCacheManager.put("subscription_plans", res, KodyarCacheManager.TTL_SUBSCRIPTION_PLANS_MS)
+            }
+            res
         } catch (e: Exception) {
             com.example.data.model.KodyarPlansResponse(
                 status = "error",
@@ -312,9 +335,19 @@ class AssistantRepository(
         }
     }
 
-    suspend fun getCardInfo() = withContext(Dispatchers.IO) {
+    suspend fun getCardInfo(forceRefresh: Boolean = false) = withContext(Dispatchers.IO) {
+        if (!forceRefresh) {
+            val cached = KodyarCacheManager.get<com.example.data.api.CardInfoResponse>("card_info")
+            if (cached != null) {
+                return@withContext cached
+            }
+        }
         try {
-            kodyarApiService.getCardInfo()
+            val res = kodyarApiService.getCardInfo()
+            if (res.success == true || !res.cardNumber.isNullOrBlank() || !res.card_number.isNullOrBlank()) {
+                KodyarCacheManager.put("card_info", res, KodyarCacheManager.TTL_CARD_INFO_MS)
+            }
+            res
         } catch (e: Exception) {
             com.example.data.api.CardInfoResponse(success = false, message = e.localizedMessage)
         }
@@ -628,12 +661,17 @@ class AssistantRepository(
         try {
             val res = kodyarApiService.storeOrder(token, request)
             if (res.status == "ok" || res.status == "success" || res.success == true || !res.payment_url.isNullOrBlank() || !res.paymentUrl.isNullOrBlank()) {
+                KodyarCacheManager.invalidateSpareParts()
                 return@withContext res
             }
         } catch (_: Exception) {}
 
         try {
-            kodyarApiService.purchasePart(token, request)
+            val res = kodyarApiService.purchasePart(token, request)
+            if (res.status == "ok" || res.status == "success" || res.success == true) {
+                KodyarCacheManager.invalidateSpareParts()
+            }
+            res
         } catch (e: Exception) {
             com.example.data.model.KodyarResponse(
                 status = "error",
