@@ -1,9 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Solid Navy Background -->
+    <!-- 1. Solid Codyar Navy Background -->
     <item>
         <shape android:shape="rectangle">
             <solid android:color="@color/codyar_navy" />
         </shape>
     </item>
+
+    <!-- 2. Centered App Logo during app launch -->
+    <item
+        android:width="110dp"
+        android:height="110dp"
+        android:gravity="center"
+        android:bottom="80dp"
+        android:drawable="@drawable/ic_app_logo" />
+
+    <!-- 3. Circular Loading Indicator directly below the Logo -->
+    <item
+        android:width="42dp"
+        android:height="42dp"
+        android:gravity="center"
+        android:top="100dp"
+        android:drawable="@drawable/ic_loading_spinner" />
 </layer-list>
+
+

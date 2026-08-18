@@ -47,13 +47,7 @@ fun AssistantScreen(
     // Screen navigation state
     // "home", "search", "problems", "store", "profile", "technicians", "orders", "ai_chat"
     var activeTab by remember { mutableStateOf("home") }
-    var showSplashScreen by remember { mutableStateOf(true) }
-
-    LaunchedEffect(Unit) {
-        // Absolute maximum splash screen duration of 1.2 seconds to present app UI immediately
-        kotlinx.coroutines.delay(1200)
-        showSplashScreen = false
-    }
+    var showSplashScreen by remember { mutableStateOf(false) }
 
     // Dialog & Sheet states
     var showAuthDialog by remember { mutableStateOf(false) }
@@ -115,13 +109,6 @@ fun AssistantScreen(
     // Live variables from ViewModel
     val currentUser by viewModel.currentUser.collectAsState()
     val isDatabaseLoading by viewModel.isDatabaseLoading.collectAsState()
-    LaunchedEffect(isDatabaseLoading) {
-        if (!isDatabaseLoading) {
-            // Dismiss after a nice, short delay once database is loaded (cache or network)
-            kotlinx.coroutines.delay(1200)
-            showSplashScreen = false
-        }
-    }
     val isAuthLoading by viewModel.isAuthLoading.collectAsState()
     val authError by viewModel.authError.collectAsState()
 
