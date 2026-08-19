@@ -47,12 +47,6 @@ fun AssistantScreen(
     // Screen navigation state
     // "home", "search", "problems", "store", "profile", "technicians", "orders", "ai_chat"
     var activeTab by remember { mutableStateOf("home") }
-    var showSplashScreen by remember { mutableStateOf(true) }
-
-    LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(500)
-        showSplashScreen = false
-    }
 
     // Dialog & Sheet states
     var showAuthDialog by remember { mutableStateOf(false) }
@@ -685,7 +679,6 @@ fun AssistantScreen(
             DisclaimerDialog(
                 showDisclaimerModal = showDisclaimerModal,
                 isDisclaimerAccepted = isDisclaimerAccepted,
-                showSplashScreen = showSplashScreen,
                 disclaimerChecked = disclaimerChecked,
                 onDisclaimerCheckedChange = { disclaimerChecked = it },
                 onAccept = {
@@ -693,9 +686,6 @@ fun AssistantScreen(
                     showDisclaimerModal = false
                 }
             )
-
-            // --- SPLASH SCREEN ---
-            SplashScreenOverlay(showSplashScreen = showSplashScreen)
         }
     }
 }

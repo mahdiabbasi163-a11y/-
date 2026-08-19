@@ -27,16 +27,16 @@ import com.example.ui.AssistantViewModel
 @Composable
 fun DisclaimerDialog(
     showDisclaimerModal: Boolean,
-    isDisclaimerAccepted: Boolean,
-    showSplashScreen: Boolean,
+    isDisclaimerAccepted: Boolean = true,
+    showSplashScreen: Boolean = false,
     disclaimerChecked: Boolean,
     onDisclaimerCheckedChange: (Boolean) -> Unit,
     onAccept: () -> Unit
 ) {
-    if (showDisclaimerModal || (!isDisclaimerAccepted && !showSplashScreen)) {
+    if (showDisclaimerModal) {
         Dialog(
-            onDismissRequest = { /* Mandatory acceptance required */ },
-            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
+            onDismissRequest = { onAccept() },
+            properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
         ) {
             Surface(
                 shape = RoundedCornerShape(18.dp),
