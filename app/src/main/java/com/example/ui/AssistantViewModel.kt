@@ -78,6 +78,11 @@ private fun normalizePhone(input: String?): String {
     return p
 }
 
+private fun hashPassword(pass: String): String {
+    val bytes = java.security.MessageDigest.getInstance("SHA-256").digest(pass.toByteArray())
+    return bytes.joinToString("") { "%02x".format(it) }
+}
+
 class AssistantViewModel(
     private val repository: AssistantRepository,
     private val context: Context
@@ -203,7 +208,29 @@ class AssistantViewModel(
             return true
         }
         
-        // Support "اراک" and "فرمهین" / "فراهان" / "مرکزی" as compatible (Markazi province)
+        // Dynamic match using server-provided center/regions structure (settings.citiesList)
+        val centers = _liveCitiesStructured.value
+        if (centers.isNotEmpty()) {
+            fun centerNameFor(cityNorm: String): String? {
+                for (center in centers) {
+                    val centerName = normalizePersian(
+                        center.name ?: center.title ?: center.city ?: center.cityName ?: center.name_fa ?: center.nameFarsi
+                    )
+                    if (centerName.isEmpty()) continue
+                    if (centerName == cityNorm) return centerName
+                    val regionMatch = center.regions?.any { normalizePersian(it) == cityNorm } == true
+                    if (regionMatch) return centerName
+                }
+                return null
+            }
+            val centerA = centerNameFor(normA)
+            val centerB = centerNameFor(normB)
+            if (centerA != null && centerB != null && centerA == centerB) {
+                return true
+            }
+        }
+        
+        // Fallback: hardcoded Markazi group (kept for safety before server data loads)
         val isMarkaziA = normA == "اراک" || normA == "فرمهین" || normA == "فراهان" || normA == "مرکزی" ||
                                 normA.contains("اراک") || normA.contains("فرمهین") || normA.contains("فراهان")
         val isMarkaziB = normB == "اراک" || normB == "فرمهین" || normB == "فراهان" || normB == "مرکزی" ||
@@ -247,6 +274,9 @@ class AssistantViewModel(
 
     private val _liveCities = MutableStateFlow<List<String>>(listOf("همه"))
     val liveCities: StateFlow<List<String>> = _liveCities.asStateFlow()
+
+    private val _liveCitiesStructured = MutableStateFlow<List<KodyarCity>>(emptyList())
+    val liveCitiesStructured: StateFlow<List<KodyarCity>> = _liveCitiesStructured.asStateFlow()
 
     private val _isDatabaseLoading = MutableStateFlow(false)
     val isDatabaseLoading: StateFlow<Boolean> = _isDatabaseLoading.asStateFlow()
@@ -551,6 +581,7 @@ class AssistantViewModel(
                         listOfNotNull(it.name, it.title, it.city, it.cityName, it.name_fa, it.nameFarsi, it.slug)
                     }.map { it.trim() }.filter { it.isNotBlank() }.distinct()
                     _liveCities.value = listOf("همه") + parsedCities
+                    _liveCitiesStructured.value = response.resolvedCitiesList
 
                     updateSearchFilters(_searchQuery.value, _selectedBrand.value, _selectedCategory.value)
                     Log.d("AssistantViewModel", "Successfully loaded database from local cache.")
@@ -889,8 +920,8 @@ class AssistantViewModel(
                     saveSessionToken(tokenToSave)
                     sharedPrefs.edit()
                         .remove("session_token")
-                        .putString("local_user_pass_${cleanPhone}", cleanPass)
-                        .putString("local_user_pass_${cleanPhone.removePrefix("0")}", cleanPass)
+                        .putString("local_user_pass_${cleanPhone}", hashPassword(cleanPass))
+                        .putString("local_user_pass_${cleanPhone.removePrefix("0")}", hashPassword(cleanPass))
                         .apply()
                     loadFreeStatus()
                     loadRepairs()
@@ -899,7 +930,7 @@ class AssistantViewModel(
                     // Check local credentials fallback
                     val savedPass = sharedPrefs.getString("local_user_pass_${cleanPhone}", null)
                         ?: sharedPrefs.getString("local_user_pass_${cleanPhone.removePrefix("0")}", null)
-                    if (savedPass != null && savedPass == cleanPass) {
+                    if (savedPass != null && savedPass == hashPassword(cleanPass)) {
                         val savedName = sharedPrefs.getString("local_user_name_${cleanPhone}", null)
                             ?: sharedPrefs.getString("local_user_name_${cleanPhone.removePrefix("0")}", "کاربر کدیار")
                         val savedRole = sharedPrefs.getString("local_user_role_${cleanPhone}", null)
@@ -938,7 +969,7 @@ class AssistantViewModel(
                 // Check local credentials fallback on network error
                 val savedPass = sharedPrefs.getString("local_user_pass_${cleanPhone}", null)
                     ?: sharedPrefs.getString("local_user_pass_${cleanPhone.removePrefix("0")}", null)
-                if (savedPass != null && savedPass == cleanPass) {
+                if (savedPass != null && savedPass == hashPassword(cleanPass)) {
                     val savedName = sharedPrefs.getString("local_user_name_${cleanPhone}", null)
                         ?: sharedPrefs.getString("local_user_name_${cleanPhone.removePrefix("0")}", "کاربر کدیار")
                     val savedRole = sharedPrefs.getString("local_user_role_${cleanPhone}", null)
@@ -1170,8 +1201,8 @@ class AssistantViewModel(
                     saveSessionToken(tokenToSave)
                     sharedPrefs.edit()
                         .remove("session_token")
-                        .putString("local_user_pass_${cleanPhone}", cleanPass)
-                        .putString("local_user_pass_${cleanPhone.removePrefix("0")}", cleanPass)
+                        .putString("local_user_pass_${cleanPhone}", hashPassword(cleanPass))
+                        .putString("local_user_pass_${cleanPhone.removePrefix("0")}", hashPassword(cleanPass))
                         .putString("local_user_name_${cleanPhone}", name)
                         .putString("local_user_name_${cleanPhone.removePrefix("0")}", name)
                         .putString("local_user_role_${cleanPhone}", role)
@@ -1366,6 +1397,7 @@ class AssistantViewModel(
                     listOfNotNull(it.name, it.title, it.city, it.cityName, it.name_fa, it.nameFarsi, it.slug)
                 }.map { it.trim() }.filter { it.isNotBlank() }.distinct()
                 _liveCities.value = listOf("همه") + parsedCities
+                _liveCitiesStructured.value = response.resolvedCitiesList
 
                 // Trigger initial search results
                 updateSearchFilters(_searchQuery.value, _selectedBrand.value, _selectedCategory.value)

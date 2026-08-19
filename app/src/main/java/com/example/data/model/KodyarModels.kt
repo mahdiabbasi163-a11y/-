@@ -117,7 +117,8 @@ data class KodyarCity(
     val cityName: String? = null,
     val name_fa: String? = null,
     val nameFarsi: String? = null,
-    val slug: String? = null
+    val slug: String? = null,
+    val regions: List<String>? = null
 )
 
 class KodyarCityAdapter {
@@ -138,8 +139,9 @@ class KodyarCityAdapter {
         var name_fa: String? = null
         var nameFarsi: String? = null
         var slug: String? = null
+        var regions: MutableList<String>? = null
 
-        val options = JsonReader.Options.of("name", "title", "city", "cityName", "name_fa", "nameFarsi", "slug")
+        val options = JsonReader.Options.of("name", "title", "city", "cityName", "name_fa", "nameFarsi", "slug", "regions", "regions_list")
         while (reader.hasNext()) {
             when (reader.selectName(options)) {
                 0 -> name = reader.nextString()
@@ -149,6 +151,23 @@ class KodyarCityAdapter {
                 4 -> name_fa = reader.nextString()
                 5 -> nameFarsi = reader.nextString()
                 6 -> slug = reader.nextString()
+                7, 8 -> {
+                    if (reader.peek() == JsonReader.Token.NULL) {
+                        reader.nextNull<Unit>()
+                    } else {
+                        val list = mutableListOf<String>()
+                        reader.beginArray()
+                        while (reader.hasNext()) {
+                            if (reader.peek() == JsonReader.Token.STRING) {
+                                list.add(reader.nextString())
+                            } else {
+                                reader.skipValue()
+                            }
+                        }
+                        reader.endArray()
+                        regions = list
+                    }
+                }
                 else -> {
                     reader.skipName()
                     reader.skipValue()
@@ -156,7 +175,7 @@ class KodyarCityAdapter {
             }
         }
         reader.endObject()
-        return KodyarCity(name, title, city, cityName, name_fa, nameFarsi, slug)
+        return KodyarCity(name, title, city, cityName, name_fa, nameFarsi, slug, regions)
     }
 
     @ToJson
@@ -173,6 +192,12 @@ class KodyarCityAdapter {
         if (value.name_fa != null) writer.name("name_fa").value(value.name_fa)
         if (value.nameFarsi != null) writer.name("nameFarsi").value(value.nameFarsi)
         if (value.slug != null) writer.name("slug").value(value.slug)
+        if (value.regions != null) {
+            writer.name("regions")
+            writer.beginArray()
+            for (r in value.regions) writer.value(r)
+            writer.endArray()
+        }
         writer.endObject()
     }
 }

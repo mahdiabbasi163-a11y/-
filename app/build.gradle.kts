@@ -28,12 +28,6 @@ android {
   }
 
   signingConfigs {
-    create("release") {
-      storeFile = file("${rootDir}/ABBASI163.jks")
-      storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "POIUYTREWQQWERTYUIOPRR"
-      keyAlias = System.getenv("KEY_ALIAS") ?: "abbasi163"
-      keyPassword = System.getenv("KEY_PASSWORD") ?: "POIUYTREWQQWERTYUIOPRR"
-    }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
       storePassword = "android"
@@ -48,11 +42,7 @@ android {
       isMinifyEnabled = true
       isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = if (file("${rootDir}/ABBASI163.jks").exists()) {
-        signingConfigs.getByName("release")
-      } else {
-        signingConfigs.getByName("debugConfig")
-      }
+      signingConfig = signingConfigs.getByName("debugConfig")
     }
     debug {
       signingConfig = signingConfigs.getByName("debugConfig")
