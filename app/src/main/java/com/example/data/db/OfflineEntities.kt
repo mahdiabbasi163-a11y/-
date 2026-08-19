@@ -192,7 +192,9 @@ fun KodyarTechnician.toEntity(): TechnicianEntity {
     val techCity = resolvedCity
     val finalId = if (!id.isNullOrBlank()) id else "${techName}_${techCity}_${resolvedCategories.firstOrNull() ?: ""}"
     val catsStr = resolvedCategories.joinToString("|||")
-    val docsStr = (documents ?: uploaded_documents ?: document_images)?.joinToString("|||")
+    val docsStr = (documents as? List<*>)?.mapNotNull { it?.toString() }?.joinToString("|||")
+        ?: (uploaded_documents as? List<*>)?.mapNotNull { it?.toString() }?.joinToString("|||")
+        ?: (document_images as? List<*>)?.mapNotNull { it?.toString() }?.joinToString("|||")
     val avatar = resolvedAvatarUrl ?: image ?: imageUrl
     return TechnicianEntity(
         id = finalId,

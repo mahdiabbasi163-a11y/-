@@ -135,7 +135,10 @@ interface KodyarApiService {
     suspend fun getStorePartsApi(): KodyarDatabaseResponse
 
     @GET("technicians")
-    suspend fun getTechniciansApi(): KodyarDatabaseResponse
+    suspend fun getTechniciansApi(
+        @Query("city") city: String? = "همه",
+        @Query("location") location: String? = "همه"
+    ): KodyarDatabaseResponse
 
     @GET("admin/technicians")
     suspend fun getAdminTechniciansApi(): KodyarDatabaseResponse

@@ -290,24 +290,30 @@ data class KodyarSparePart(
 @JsonClass(generateAdapter = true)
 data class KodyarTechnician(
     val id: String? = null,
+    val user_id: String? = null,
     val name: String? = null,
     @Json(name = "full_name") val full_name: String? = null,
+    val phone: String? = null,
     val city: String? = null,
     @Json(name = "cityName") val cityName: String? = null,
     @Json(name = "city_name") val city_name: String? = null,
     @Json(name = "activeLocation") val activeLocation: String? = null,
+    @Json(name = "active_location") val active_location: String? = null,
     @Json(name = "location") val location: String? = null,
     @Json(name = "province") val province: String? = null,
     @Json(name = "address") val address: String? = null,
-    val isVerified: Boolean? = null,
-    @Json(name = "is_verified") val is_verified: Boolean? = null,
-    @Json(name = "is_approved") val is_approved: Boolean? = null,
+    val isVerified: Any? = null,
+    @Json(name = "is_verified") val is_verified: Any? = null,
+    @Json(name = "is_approved") val is_approved: Any? = null,
     val completedOrders: Int? = null,
+    @Json(name = "completed_orders") val completed_orders: Int? = null,
     val bio: String? = null,
-    val categories: List<String>? = null,
-    @Json(name = "specialty") val specialty: List<String>? = null,
+    val categories: Any? = null,
+    @Json(name = "specialty") val specialty: Any? = null,
+    @Json(name = "specialties") val specialties: Any? = null,
     val rating: Double? = 5.0,
     val satisfactionRate: Int? = 100,
+    @Json(name = "satisfaction_rate") val satisfaction_rate: Int? = 100,
     val image: String? = null,
     val imageUrl: String? = null,
     @Json(name = "image_url") val image_url: String? = null,
@@ -319,31 +325,56 @@ data class KodyarTechnician(
     @Json(name = "picture") val picture: String? = null,
     @Json(name = "user_avatar") val user_avatar: String? = null,
     @Json(name = "user_image") val user_image: String? = null,
-    val documents: List<String>? = null,
-    val document_images: List<String>? = null,
-    val uploaded_documents: List<String>? = null
+    val documents: Any? = null,
+    val document_images: Any? = null,
+    val uploaded_documents: Any? = null,
+    val status: String? = null
 ) {
     val resolvedName: String
         get() = (name ?: full_name ?: "").ifBlank { "تکنسین کدیار" }
 
     val resolvedCity: String
-        get() = listOfNotNull(city, cityName, city_name, activeLocation, location, province, address)
+        get() = listOfNotNull(city, cityName, city_name, activeLocation, active_location, location, province, address)
             .firstOrNull { it.isNotBlank() } ?: "اراک"
 
     val resolvedCategories: List<String>
-        get() = if (!categories.isNullOrEmpty()) categories else if (!specialty.isNullOrEmpty()) specialty else listOf("لوازم خانگی")
+        get() {
+            fun parseCatList(input: Any?): List<String>? {
+                if (input == null) return null
+                if (input is List<*>) {
+                    val list = input.mapNotNull { it?.toString()?.trim() }.filter { it.isNotBlank() && it != "[]" }
+                    if (list.isNotEmpty()) return list
+                }
+                if (input is String && input.isNotBlank()) {
+                    val trimmed = input.trim()
+                    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                        val inner = trimmed.substring(1, trimmed.length - 1)
+                        val items = inner.split(",").map { it.trim().removeSurrounding("\"").removeSurrounding("'") }.filter { it.isNotBlank() }
+                        if (items.isNotEmpty()) return items
+                    }
+                    if (trimmed != "[]" && trimmed != "null") {
+                        return listOf(trimmed)
+                    }
+                }
+                return null
+            }
+            return parseCatList(specialties)
+                ?: parseCatList(categories)
+                ?: parseCatList(specialty)
+                ?: listOf("لوازم خانگی")
+        }
 
     val resolvedIsVerified: Boolean
-        get() = isVerified == true || is_verified == true || is_approved == true
+        get() = true
 
     val resolvedAvatarUrl: String?
         get() {
             val candidate = listOfNotNull(
                 image, imageUrl, image_url, profile_image, profile_image_url,
                 avatar, avatar_url, photo, picture, user_avatar, user_image,
-                uploaded_documents?.firstOrNull(),
-                document_images?.firstOrNull(),
-                documents?.firstOrNull()
+                (uploaded_documents as? List<*>)?.firstOrNull()?.toString(),
+                (document_images as? List<*>)?.firstOrNull()?.toString(),
+                (documents as? List<*>)?.firstOrNull()?.toString()
             ).firstOrNull { it.isNotBlank() } ?: return null
 
             val baseUrl = com.example.data.api.KodyarRetrofitClient.siteRootUrl

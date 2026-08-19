@@ -499,7 +499,7 @@ fun HomeScreen(
                 val cardColor = categoryColors[index % categoryColors.size]
                 
                 val recommendingTech = remember(liveTechs, cat) {
-                    val matchingTechs = liveTechs.filter { it.categories?.any { specialty -> specialty.contains(cat, ignoreCase = true) || cat.contains(specialty, ignoreCase = true) } == true }
+                    val matchingTechs = liveTechs.filter { it.resolvedCategories.any { specialty -> specialty.contains(cat, ignoreCase = true) || cat.contains(specialty, ignoreCase = true) } }
                     if (matchingTechs.isNotEmpty()) {
                         matchingTechs.maxByOrNull { tech ->
                             val orders = tech.completedOrders ?: 0

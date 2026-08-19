@@ -198,45 +198,135 @@ class AssistantViewModel(
             .apply()
     }
 
+    companion object {
+        private val PROVINCE_FAMILIES = listOf(
+            ProvinceFamily("اراک", listOf("اراک", "مرکزی", "استان مرکزی"), listOf("فرمهین", "ساوه", "خمین", "محلات", "شازند", "تفرش", "دلیجان", "زرندیه", "کمیجان", "آشتیان", "خنداب", "مامونیه", "غرق آباد", "میلاجرد", "ساروق", "نراق")),
+            ProvinceFamily("تهران", listOf("تهران", "استان تهران"), listOf("ری", "شهر ری", "شمیرانات", "شمیران", "تجریش", "اسلامشهر", "شهریار", "دماوند", "ورامین", "پاکدشت", "رباط کریم", "قدس", "شهر قدس", "ملارد", "پردیس", "بهارستان", "قرچک", "فیروزکوه", "بومهن", "رودهن", "لواسان", "اندیشه", "صفادشت", "کهریزک", "حسن آباد")),
+            ProvinceFamily("مشهد", listOf("مشهد", "خراسان", "خراسان رضوی"), listOf("نیشابور", "سبزوار", "تربت حیدریه", "قوچان", "چناران", "کاشمر", "تربت جام", "تایباد", "سرخس", "گناباد", "فریمان", "بینالود", "طرقبه", "شاندیز", "خواف", "بردسکن", "درگز", "کلات", "باخرز", "خلیل آباد")),
+            ProvinceFamily("اصفهان", listOf("اصفهان", "استان اصفهان"), listOf("کاشان", "خمینی شهر", "نجف آباد", "شاهین شهر", "فولادشهر", "لنجان", "شهرضا", "مبارکه", "فلاورجان", "آران و بیدگل", "زرین شهر", "گلپایگان", "سمیرم", "خوانسار", "تیران", "داران", "نطنز", "اردستان", "نائین")),
+            ProvinceFamily("شیراز", listOf("شیراز", "فارس", "استان فارس"), listOf("مرودشت", "کازرون", "جهرم", "لار", "لارستان", "فسا", "داراب", "فیروزآباد", "ممسنی", "نورآباد", "آباده", "اقلید", "سپیدان", "استهبان", "نی ریز", "لامرد", "کوار")),
+            ProvinceFamily("تبریز", listOf("تبریز", "آذربایجان شرقی", "آذربایجان"), listOf("مراغه", "مرند", "میانه", "اهر", "بناب", "سراب", "آذرشهر", "اسکو", "شبستر", "عجب شیر", "ملکان", "هریس", "بستان آباد", "کلیبر", "جلفا", "سهند")),
+            ProvinceFamily("اهواز", listOf("اهواز", "خوزستان", "استان خوزستان"), listOf("آبادان", "دزفول", "خرمشهر", "ماهشهر", "بندر ماهشهر", "ایذه", "بهبهان", "شوشتر", "شوش", "امیدیه", "مسجد سلیمان", "رامهرمز", "اندیمشک", "شادگان", "هندیجان", "سوسنگرد", "دشت آزادگان")),
+            ProvinceFamily("کرج", listOf("کرج", "البرز", "استان البرز"), listOf("فردیس", "ساوجبلاغ", "نظرآباد", "هشتگرد", "طالقان", "اشتهارد", "کمال شهر", "محمدشهر", "ماهدشت", "گرمدره", "چهارباغ")),
+            ProvinceFamily("قم", listOf("قم", "استان قم"), listOf("کهک", "جعفریه", "سلفچگان", "قنوات", "دستجرد")),
+            ProvinceFamily("رشت", listOf("رشت", "گیلان", "استان گیلان"), listOf("انزلی", "بندر انزلی", "لاهیجان", "لنگرود", "فومن", "رودسر", "تالش", "هشتپر", "صومعه سرا", "آستارا", "آستانه اشرفیه", "رودبار", "منجیل", "لوشان", "ماسوله", "ماسال", "شفت", "سیاهکل", "رضوانشهر")),
+            ProvinceFamily("ساری", listOf("ساری", "مازندران", "استان مازندران"), listOf("بابل", "آمل", "قائم شهر", "قائمشهر", "تنکابن", "شهسوار", "چالوس", "نوشهر", "بابلسر", "رامسر", "محمودآباد", "نور", "نکا", "بهشهر", "فریدونکنار", "جویبار", "سوادکوه", "زیرآب", "پل سفید", "کلاردشت", "عباس آباد", "رویان")),
+            ProvinceFamily("کرمانشاه", listOf("کرمانشاه", "استان کرمانشاه"), listOf("اسلام آباد غرب", "کنگاور", "سنقر", "جوانرود", "صحنه", "هرسین", "سرپل ذهاب", "پاوه", "روانسر", "گیلانغرب", "قصر شیرین", "تازه آباد")),
+            ProvinceFamily("ارومیه", listOf("ارومیه", "آذربایجان غربی"), listOf("خوی", "بوکان", "مهاباد", "میاندوآب", "سلماس", "پیرانشهر", "نقده", "تکاب", "ماکو", "سردشت", "شاهین دژ", "اشنویه", "قره ضیاءالدین", "سیه چشمه")),
+            ProvinceFamily("یزد", listOf("یزد", "استان یزد"), listOf("میبد", "اردکان", "مهریز", "بافق", "ابرکوه", "تفت", "اشکذر", "هرات", "مروست", "بهاباد")),
+            ProvinceFamily("کرمان", listOf("کرمان", "استان کرمان"), listOf("رفسنجان", "سیرجان", "جیرفت", "بم", "زرند", "کهنوج", "شهر بابک", "بافت", "بردسیر", "عنبرآباد", "منوجان", "راور")),
+            ProvinceFamily("همدان", listOf("همدان", "استان همدان"), listOf("ملایر", "نهاوند", "تویسرکان", "کبودرآهنگ", "بهار", "رزن", "فامنین", "لالجین", "مریانج", "قروه درجزین")),
+            ProvinceFamily("خرم آباد", listOf("خرم آباد", "لرستان", "استان لرستان"), listOf("بروجرد", "دورود", "الیگودرز", "کوهدشت", "ازنا", "پلدختر", "الشتر", "سلسله", "نورآباد", "دلفان", "چگنی")),
+            ProvinceFamily("قزوین", listOf("قزوین", "استان قزوین"), listOf("الوند", "البرز قزوین", "تاکستان", "بوئین زهرا", "آبیک", "محمدیه", "محمودآباد نمونه", "اقبالیه", "شریفیه", "ضیاءآباد")),
+            ProvinceFamily("زنجان", listOf("زنجان", "استان زنجان"), listOf("ابهر", "خرمدره", "قیدار", "خدابنده", "طارم", "آب بر", "ماهنشان", "ایجرود", "زرین آباد", "سلطانیه")),
+            ProvinceFamily("سمنان", listOf("سمنان", "استان سمنان"), listOf("شاهرود", "دامغان", "گرمسار", "مهدی شهر", "سنگسر", "سرخه", "آرادان", "میامی", "بسطام", "شهمیرزاد")),
+            ProvinceFamily("گرگان", listOf("گرگان", "گلستان", "استان گلستان"), listOf("گنبد کاووس", "گنبد", "علی آباد کتول", "بندر ترکمن", "آق قلا", "کلاله", "آزادشهر", "کردکوی", "مینودشت", "گالیکش", "بندر گز", "رامیان", "مراوه تپه", "گمیشان")),
+            ProvinceFamily("بوشهر", listOf("بوشهر", "استان بوشهر"), listOf("برازجان", "دشتستان", "گناوه", "بندر گناوه", "کنگان", "بندر کنگان", "عسلویه", "خورموج", "دشتی", "جم", "دیلم", "بندر دیلم", "اهرم", "تنگستان", "دیر", "بندر دیر")),
+            ProvinceFamily("بندر عباس", listOf("بندر عباس", "بندرعباس", "هرمزگان", "استان هرمزگان"), listOf("قشم", "کیش", "میناب", "بندرلنگه", "لنگه", "رودان", "بستک", "حاجی آباد", "جاسک", "بندر خمیر", "پارسیان", "گاوبندی", "سیریک", "بشاگرد")),
+            ProvinceFamily("زاهدان", listOf("زاهدان", "سیستان و بلوچستان", "سیستان", "بلوچستان"), listOf("زابل", "ایرانشهر", "چابهار", "بندر چابهار", "سراوان", "خاش", "نیک شهر", "کنارک", "راسک", "سرباز", "میرجاوه", "زهک", "هیرمند", "قصرقند")),
+            ProvinceFamily("سنندج", listOf("سنندج", "کردستان", "استان کردستان"), listOf("سقز", "مریوان", "بانه", "قروه", "کامیاران", "بیجار", "دیواندره", "دهگلان", "سروآباد")),
+            ProvinceFamily("اردبیل", listOf("اردبیل", "استان اردبیل"), listOf("پارس آباد", "مشگین شهر", "خلخال", "گرمی", "نمین", "بیله سوار", "کوثر", "گیوی", "سرعین", "نیر", "اصلاندوز")),
+            ProvinceFamily("شهرکرد", listOf("شهرکرد", "چهارمحال و بختیاری", "چهارمحال"), listOf("بروجن", "فارسان", "لردگان", "فرخ شهر", "سامان", "بن", "کیار", "شلمزار", "کوهرنگ", "چلگرد", "اردل", "خانمیرزا")),
+            ProvinceFamily("ایلام", listOf("ایلام", "استان ایلام"), listOf("دهلران", "ایوان", "آبدانان", "مهران", "دره شهر", "چرداول", "سرابله", "بدره", "ملکشاهی", "سیروان")),
+            ProvinceFamily("یاسوج", listOf("یاسوج", "کهگیلویه و بویراحمد", "کهگیلویه"), listOf("دوگنبدان", "گچساران", "دهدشت", "لیکک", "بهمئی", "چرام", "لنده", "سی سخت", "دنا", "باشت", "مارگون")),
+            ProvinceFamily("بجنورد", listOf("بجنورد", "خراسان شمالی"), listOf("شیروان", "اسفراین", "گرمه", "جاجرم", "آشخانه", "مانه و سملقان", "فاروج", "راز و جرگلان")),
+            ProvinceFamily("بیرجند", listOf("بیرجند", "خراسان جنوبی"), listOf("قائنات", "قائن", "فردوس", "طبس", "نهبندان", "سرایان", "سربیشه", "بشرویه", "درمیان", "اسدیه", "خوسف", "زیرکوه"))
+        )
+    }
+
+    private data class ProvinceFamily(
+        val family: String,
+        val aliases: List<String>,
+        val regions: List<String>
+    )
+
     fun areCitiesCompatible(cityA: String?, cityB: String?): Boolean {
+        fun cleanCityNorm(input: String?): String {
+            var s = normalizePersian(input)
+            val prefixes = listOf("شهرستان ", "شهر ", "استان ", "بخش ", "حومه ", "منطقه ", "روستای ", "روستا ", "شهرک ")
+            for (p in prefixes) {
+                if (s.startsWith(p)) {
+                    s = s.removePrefix(p).trim()
+                }
+            }
+            return s
+        }
+
         val normA = normalizePersian(cityA)
         val normB = normalizePersian(cityB)
-        if (normA.isEmpty() || normB.isEmpty()) return false
+        if (normA.isEmpty() || normB.isEmpty()) return true
+        if (normA == "همه" || normB == "همه" || normA == "all" || normB == "all") return true
         
-        // Direct match or substring match
-        if (normA == normB || normA.contains(normB, ignoreCase = true) || normB.contains(normA, ignoreCase = true)) {
+        val cleanA = cleanCityNorm(cityA)
+        val cleanB = cleanCityNorm(cityB)
+        
+        // Direct match or substring match on raw or cleaned names
+        if (normA == normB || cleanA == cleanB ||
+            normA.contains(normB, ignoreCase = true) || normB.contains(normA, ignoreCase = true) ||
+            cleanA.contains(cleanB, ignoreCase = true) || cleanB.contains(cleanA, ignoreCase = true)) {
             return true
         }
         
-        // Dynamic match using server-provided center/regions structure (settings.citiesList)
+        // 1. Dynamic match using server-provided center/regions structure
         val centers = _liveCitiesStructured.value
         if (centers.isNotEmpty()) {
-            fun centerNameFor(cityNorm: String): String? {
+            fun centerNameFor(cityNorm: String, cityClean: String): String? {
                 for (center in centers) {
                     val centerName = normalizePersian(
                         center.name ?: center.title ?: center.city ?: center.cityName ?: center.name_fa ?: center.nameFarsi
                     )
+                    val centerClean = cleanCityNorm(centerName)
                     if (centerName.isEmpty()) continue
-                    if (centerName == cityNorm) return centerName
-                    val regionMatch = center.regions?.any { normalizePersian(it) == cityNorm } == true
+                    if (centerName == cityNorm || centerClean == cityClean || cityNorm.contains(centerName) || centerName.contains(cityNorm)) return centerName
+                    val regionMatch = center.regions?.any { 
+                        val rNorm = normalizePersian(it)
+                        val rClean = cleanCityNorm(rNorm)
+                        rNorm == cityNorm || rClean == cityClean || cityNorm.contains(rNorm) || rNorm.contains(cityNorm)
+                    } == true
                     if (regionMatch) return centerName
                 }
                 return null
             }
-            val centerA = centerNameFor(normA)
-            val centerB = centerNameFor(normB)
+            val centerA = centerNameFor(normA, cleanA)
+            val centerB = centerNameFor(normB, cleanB)
             if (centerA != null && centerB != null && centerA == centerB) {
                 return true
             }
         }
         
-        // Fallback: hardcoded Markazi group (kept for safety before server data loads)
-        val isMarkaziA = normA == "اراک" || normA == "فرمهین" || normA == "فراهان" || normA == "مرکزی" ||
-                                normA.contains("اراک") || normA.contains("فرمهین") || normA.contains("فراهان")
-        val isMarkaziB = normB == "اراک" || normB == "فرمهین" || normB == "فراهان" || normB == "مرکزی" ||
-                                normB.contains("اراک") || normB.contains("فرمهین") || normB.contains("فراهان")
-        if (isMarkaziA && isMarkaziB) {
-            return true
+        // 2. Built-in full province families dictionary (synced with server)
+        fun findFamilies(textNorm: String, textClean: String): Set<String> {
+            val result = mutableSetOf<String>()
+            for (pf in PROVINCE_FAMILIES) {
+                val fNorm = normalizePersian(pf.family)
+                val fClean = cleanCityNorm(fNorm)
+                val isFamilyMatch = textNorm.contains(fNorm) || fNorm.contains(textNorm) ||
+                                   textClean.contains(fClean) || fClean.contains(textClean)
+                val isAliasMatch = pf.aliases.any { 
+                    val aNorm = normalizePersian(it)
+                    val aClean = cleanCityNorm(aNorm)
+                    textNorm.contains(aNorm) || aNorm.contains(textNorm) ||
+                    textClean.contains(aClean) || aClean.contains(textClean)
+                }
+                val isRegionMatch = pf.regions.any { 
+                    val rNorm = normalizePersian(it)
+                    val rClean = cleanCityNorm(rNorm)
+                    textNorm.contains(rNorm) || rNorm.contains(textNorm) ||
+                    textClean.contains(rClean) || rClean.contains(textClean)
+                }
+                if (isFamilyMatch || isAliasMatch || isRegionMatch) {
+                    result.add(fNorm)
+                }
+            }
+            return result
+        }
+
+        val famA = findFamilies(normA, cleanA)
+        val famB = findFamilies(normB, cleanB)
+        if (famA.isNotEmpty() && famB.isNotEmpty()) {
+            if (famA.any { famB.contains(it) }) {
+                return true
+            }
         }
         
         return false
@@ -478,6 +568,7 @@ class AssistantViewModel(
             }
             checkSavedSession()
             loadKodyarDatabase()
+            refreshTechnicians()
             fetchSubscriptionPlans()
             loadPartPurchases()
         }
@@ -900,7 +991,7 @@ class AssistantViewModel(
                     val isTech = response.user.role == "technician" || matchedTech != null
                     val finalRole = if (isTech) "technician" else if (!response.user.role.isNullOrBlank()) response.user.role else (cached?.role ?: "customer")
                     val userCats = if (!response.user.categories.isNullOrEmpty()) response.user.categories else response.user.specialty
-                    val finalCategories = if (!userCats.isNullOrEmpty()) userCats else (matchedTech?.categories ?: cached?.categories)
+                    val finalCategories = if (!userCats.isNullOrEmpty()) userCats else (matchedTech?.resolvedCategories ?: cached?.categories)
 
                     val mergedUser = response.user.copy(
                         subscription = sub,
@@ -1370,10 +1461,40 @@ class AssistantViewModel(
                 checkAppVersion(response)
                 _liveErrorCodes.value = response.resolvedErrorCodes
                 _liveSpareParts.value = response.resolvedSpareParts
-                _liveTechnicians.value = response.resolvedTechnicians
+                
+                val incomingTechs = response.resolvedTechnicians
+                val currentTechs = _liveTechnicians.value.toMutableList()
+                if (incomingTechs.isNotEmpty()) {
+                    for (t in incomingTechs) {
+                        val idx = currentTechs.indexOfFirst { it.id == t.id || (!it.name.isNullOrBlank() && it.name == t.name) }
+                        if (idx >= 0) {
+                            currentTechs[idx] = t
+                        } else {
+                            currentTechs.add(t)
+                        }
+                    }
+                }
+                _liveTechnicians.value = currentTechs
+
+                try {
+                    val directTechs = repository.getTechniciansDirectly()
+                    if (directTechs.isNotEmpty()) {
+                        val updatedList = _liveTechnicians.value.toMutableList()
+                        for (t in directTechs) {
+                            val idx = updatedList.indexOfFirst { it.id == t.id || (!it.name.isNullOrBlank() && it.name == t.name) }
+                            if (idx >= 0) {
+                                updatedList[idx] = t
+                            } else {
+                                updatedList.add(t)
+                            }
+                        }
+                        _liveTechnicians.value = updatedList
+                    }
+                } catch (_: Exception) {}
+
                 val currentTechUser = _currentUser.value
                 if (currentTechUser != null && currentTechUser.role == "technician" && currentTechUser.isApprovedUser != true) {
-                    val matchedTech = response.resolvedTechnicians.find { it.id == currentTechUser.id || (!it.name.isNullOrBlank() && it.name == currentTechUser.full_name) }
+                    val matchedTech = _liveTechnicians.value.find { it.id == currentTechUser.id || (!it.name.isNullOrBlank() && it.name == currentTechUser.full_name) }
                     if (matchedTech?.resolvedIsVerified == true) {
                         val updatedTech = currentTechUser.copy(
                             is_approved = true,
@@ -1429,6 +1550,28 @@ class AssistantViewModel(
             } finally {
                 ensureDefaultFilters()
                 _isDatabaseLoading.value = false
+            }
+        }
+    }
+
+    fun refreshTechnicians() {
+        viewModelScope.launch {
+            try {
+                val techRes = repository.getTechniciansDirectly()
+                if (techRes.isNotEmpty()) {
+                    val currentList = _liveTechnicians.value.toMutableList()
+                    for (t in techRes) {
+                        val idx = currentList.indexOfFirst { it.id == t.id || (!it.name.isNullOrBlank() && it.name == t.name) }
+                        if (idx >= 0) {
+                            currentList[idx] = t
+                        } else {
+                            currentList.add(t)
+                        }
+                    }
+                    _liveTechnicians.value = currentList
+                }
+            } catch (e: Exception) {
+                Log.e("AssistantViewModel", "Failed to refresh technicians: ${e.message}")
             }
         }
     }

@@ -18,6 +18,7 @@ import com.example.data.db.OfflineDataDao
 import com.example.data.db.toDomain
 import com.example.data.db.toEntity
 import com.example.data.cache.KodyarCacheManager
+import com.example.data.model.*
 
 class AssistantRepository(
     private val assistantDao: AssistantDao,
@@ -79,11 +80,6 @@ class AssistantRepository(
             if (res.resolvedSpareParts.isNotEmpty()) mergedSpareParts = res.resolvedSpareParts
             if (res.resolvedCommonProblems.isNotEmpty()) mergedProblems = res.resolvedCommonProblems
             if (res.resolvedTechnicians.isNotEmpty()) mergedTechs = res.resolvedTechnicians
-
-            if (mergedErrorCodes.isNotEmpty() && mergedSpareParts.isNotEmpty()) {
-                KodyarCacheManager.put("kodyar_database", res, KodyarCacheManager.TTL_SPARE_PARTS_MS)
-                return@withContext res
-            }
         } catch (e: Exception) {
             android.util.Log.w("AssistantRepository", "getDatabase endpoint failed: ${e.message}")
         }
@@ -137,20 +133,30 @@ class AssistantRepository(
             }
         }
 
-        if (mergedTechs.isEmpty()) {
-            try {
-                val techRes = kodyarApiService.getTechniciansApi()
-                if (techRes.resolvedTechnicians.isNotEmpty()) {
-                    mergedTechs = techRes.resolvedTechnicians
+        try {
+            val techRes = kodyarApiService.getTechniciansApi()
+            if (techRes.resolvedTechnicians.isNotEmpty()) {
+                val existingIds = mergedTechs.mapNotNull { it.id }.toSet()
+                val existingNames = mergedTechs.mapNotNull { it.name }.toSet()
+                val newTechs = techRes.resolvedTechnicians.filter { 
+                    (it.id == null || !existingIds.contains(it.id)) && 
+                    (it.name == null || !existingNames.contains(it.name))
                 }
-            } catch (e: Exception) {
-                try {
-                    val techRes2 = kodyarApiService.getAdminTechniciansApi()
-                    if (techRes2.resolvedTechnicians.isNotEmpty()) {
-                        mergedTechs = techRes2.resolvedTechnicians
-                    }
-                } catch (_: Exception) {}
+                mergedTechs = mergedTechs + newTechs
             }
+        } catch (e: Exception) {
+            try {
+                val techRes2 = kodyarApiService.getAdminTechniciansApi()
+                if (techRes2.resolvedTechnicians.isNotEmpty()) {
+                    val existingIds = mergedTechs.mapNotNull { it.id }.toSet()
+                    val existingNames = mergedTechs.mapNotNull { it.name }.toSet()
+                    val newTechs = techRes2.resolvedTechnicians.filter { 
+                        (it.id == null || !existingIds.contains(it.id)) && 
+                        (it.name == null || !existingNames.contains(it.name))
+                    }
+                    mergedTechs = mergedTechs + newTechs
+                }
+            } catch (_: Exception) {}
         }
 
         val finalDb = com.example.data.model.KodyarDatabaseResponse(
@@ -164,6 +170,25 @@ class AssistantRepository(
             KodyarCacheManager.put("kodyar_database", finalDb, KodyarCacheManager.TTL_SPARE_PARTS_MS)
         }
         return@withContext finalDb
+    }
+
+    suspend fun getTechniciansDirectly(): List<KodyarTechnician> = withContext(Dispatchers.IO) {
+        val list = mutableListOf<KodyarTechnician>()
+        try {
+            val res = kodyarApiService.getTechniciansApi()
+            if (res.resolvedTechnicians.isNotEmpty()) {
+                list.addAll(res.resolvedTechnicians)
+            }
+        } catch (_: Exception) {}
+        if (list.isEmpty()) {
+            try {
+                val res2 = kodyarApiService.getAdminTechniciansApi()
+                if (res2.resolvedTechnicians.isNotEmpty()) {
+                    list.addAll(res2.resolvedTechnicians)
+                }
+            } catch (_: Exception) {}
+        }
+        return@withContext list
     }
 
     suspend fun getSubscriptionPlans(forceRefresh: Boolean = false) = withContext(Dispatchers.IO) {

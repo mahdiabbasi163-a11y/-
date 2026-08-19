@@ -63,6 +63,10 @@ fun TechniciansScreen(
     var newCityInput by remember { mutableStateOf("") }
     var changeCityExpanded by remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        viewModel.refreshTechnicians()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -331,13 +335,7 @@ fun TechniciansScreen(
             verticalArrangement = Arrangement.spacedBy(9.dp)
         ) {
             val baseFiltered = techsList.filter { tech ->
-                val isSelf = currentUser != null && (
-                    (!tech.id.isNullOrBlank() && tech.id == currentUser.id) ||
-                    (currentUser.full_name != null && tech.resolvedName == currentUser.full_name)
-                )
-                if (isSelf || !tech.resolvedIsVerified) {
-                    false
-                } else if (sortBy == "all" || selectedCityFilter == "همه") {
+                if (selectedCityFilter == "همه") {
                     true
                 } else {
                     val targetCity = selectedCityFilter.ifBlank { userCity ?: "" }
@@ -503,14 +501,14 @@ fun TechniciansScreen(
                                 }
 
                                 // Categories
-                                if (!tech.categories.isNullOrEmpty()) {
+                                if (tech.resolvedCategories.isNotEmpty()) {
                                     Row(
                                         modifier = Modifier
                                             .horizontalScroll(rememberScrollState())
                                             .padding(bottom = 9.dp),
                                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
-                                        tech.categories.forEach { cat ->
+                                        tech.resolvedCategories.forEach { cat ->
                                             Box(
                                                 modifier = Modifier
                                                     .background(Color(0xFFE8EAF0), RoundedCornerShape(5.dp))
