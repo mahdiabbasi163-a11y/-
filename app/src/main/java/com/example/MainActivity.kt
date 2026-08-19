@@ -32,7 +32,7 @@ import androidx.compose.runtime.getValue
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-    private var bazaarBillingManager: BazaarBillingManager? = null
+    var bazaarBillingManager: BazaarBillingManager? = null
     lateinit var viewModel: AssistantViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {

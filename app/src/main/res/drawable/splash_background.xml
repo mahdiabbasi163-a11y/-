@@ -7,21 +7,12 @@
         </shape>
     </item>
 
-    <!-- 2. Centered App Logo during app launch -->
+    <!-- 2. Centered App Logo during cold start -->
     <item
-        android:width="110dp"
-        android:height="110dp"
+        android:width="100dp"
+        android:height="100dp"
         android:gravity="center"
-        android:bottom="80dp"
         android:drawable="@drawable/ic_app_logo" />
-
-    <!-- 3. Circular Loading Indicator directly below the Logo -->
-    <item
-        android:width="42dp"
-        android:height="42dp"
-        android:gravity="center"
-        android:top="100dp"
-        android:drawable="@drawable/ic_loading_spinner" />
 </layer-list>
 
 

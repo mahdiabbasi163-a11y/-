@@ -25,7 +25,7 @@ class ExampleRobolectricTest {
     val activity = Robolectric.buildActivity(MainActivity::class.java).create().start().resume().get()
     val billingManager = activity.bazaarBillingManager
     // Call launchPurchaseFlow and verify it compiles, executes, and returns a boolean without throwing an exception
-    val result = billingManager.launchPurchaseFlow(activity, "1_month")
+    val result = billingManager?.launchPurchaseFlow(activity, "1_month")
     println("Billing launch result: $result")
   }
 }
